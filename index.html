@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Almoxarifado Inteligente</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111827">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Almoxarifado">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#687585;--line:#e4e8ed;--accent:#2457d6;--danger:#c62828;--warn:#b26a00;--ok:#147a43;--shadow:0 8px 25px rgba(20,35,55,.08)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Arial,sans-serif;color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;background:var(--accent);color:white;font-weight:700}
+button.secondary{background:#eef2f7;color:var(--text)}button.danger{background:#b42318}.app{display:flex;min-height:100vh}
+aside{width:245px;background:#111827;color:#fff;padding:22px 14px;position:sticky;top:0;height:100vh}
+.logo{font-size:20px;font-weight:800;padding:8px 10px 24px}.logo small{display:block;color:#9ca3af;font-size:11px;margin-top:4px}
+nav button{display:block;width:100%;text-align:left;background:transparent;color:#d1d5db;margin:4px 0}nav button.active,nav button:hover{background:#24324a;color:#fff}
+main{flex:1;padding:26px;max-width:1500px;margin:auto;width:100%}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}.top h1{margin:0;font-size:27px}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.kpi strong{display:block;font-size:30px;margin-top:8px}.kpi.danger strong{color:var(--danger)}.kpi.warn strong{color:var(--warn)}.kpi.ok strong{color:var(--ok)}
+.section{display:none}.section.active{display:block}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select{min-height:42px;padding:9px 11px;border:1px solid #d5dbe3;border-radius:10px;background:white}
+table{width:100%;border-collapse:collapse;background:white}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px}th,td{padding:12px 13px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{background:#f8fafc;font-size:12px;color:var(--muted);text-transform:uppercase}tr:last-child td{border-bottom:0}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800}.critical{background:#fde8e8;color:var(--danger)}.reposition{background:#fff1d8;color:var(--warn)}.ok{background:#e4f6ec;color:var(--ok)}.pending{background:#eef1f5;color:#5c6775}
+.formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #d5dbe3;border-radius:10px;background:white}.field textarea{min-height:80px;resize:vertical}.full{grid-column:1/-1}
+.actions{display:flex;gap:9px;justify-content:flex-end;margin-top:15px}.empty{padding:35px;text-align:center;color:var(--muted)}
+.count-card{display:grid;grid-template-columns:1fr 160px 150px;gap:14px;align-items:center}.count-card input{width:100%;padding:13px;border:2px solid #dbe1e8;border-radius:10px;font-size:20px}.count-card input:focus{outline:none;border-color:var(--accent)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}.modal.open{display:flex}.modalbox{background:white;border-radius:18px;padding:22px;max-width:800px;width:100%;max-height:90vh;overflow:auto}
+.img-preview{width:72px;height:72px;border-radius:12px;object-fit:contain;background:#f3f5f8;border:1px solid #dce2e9;display:block}.logo-preview{width:90px;height:90px;border-radius:14px;object-fit:contain;background:#f3f5f8;border:1px solid #dce2e9}.quote-product-img{width:34px;height:34px;object-fit:contain;vertical-align:middle;margin-right:8px;border-radius:6px}.toast{position:fixed;right:20px;bottom:20px;background:#111827;color:#fff;padding:13px 17px;border-radius:10px;display:none;z-index:30}.toast.show{display:block}
+.print-doc{display:none}
+@media(max-width:900px){aside{width:190px}.grid{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:repeat(2,1fr)}.count-card{grid-template-columns:1fr 120px}}
+@media(max-width:650px){aside{position:fixed;bottom:0;top:auto;height:auto;width:100%;z-index:5;padding:5px;background:#111827}.logo{display:none}nav{display:grid;grid-template-columns:repeat(5,1fr)}nav button{font-size:10px;text-align:center;padding:9px 3px;margin:0}main{padding:17px 13px 80px}.grid{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}.top h1{font-size:21px}.count-card{grid-template-columns:1fr}.count-card input{font-size:18px}}
+@media print{body{background:white}.app{display:none}.print-doc{display:block;padding:28px;font-family:Arial,sans-serif}.print-head{border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:18px}.print-head h1{margin:0 0 8px;font-size:22px}.print-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px}.print-doc table{border:1px solid #222}.print-doc th,.print-doc td{border:1px solid #222;padding:8px}.print-footer{margin-top:25px;font-size:12px}.no-print{display:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside><div class="logo">📦 Almoxarifado <small>Controle inteligente</small></div>
+<nav>
+<button data-page="home" class="active">🏠 Início</button>
+<button data-page="materials">📦 Materiais</button>
+<button data-page="count">📝 Contagem</button>
+<button data-page="replenishment">🛒 Reposição</button>
+<button data-page="quotes">📄 Orçamentos</button>
+<button data-page="suppliers">🚚 Fornecedores</button>
+<button data-page="history">📊 Histórico</button>
+<button data-page="settings">⚙️ Config.</button>
+</nav></aside>
+<main>
+<section id="home" class="section active">
+<div class="top"><div><h1>Almoxarifado</h1><div class="muted">Visão geral e controle de reposição</div></div><button onclick="startCount()">📝 Nova contagem</button></div>
+<div class="grid">
+<div class="card kpi"><span>Total de materiais</span><strong id="kTotal">0</strong></div>
+<div class="card kpi danger"><span>Críticos</span><strong id="kCritical">0</strong></div>
+<div class="card kpi warn"><span>Em reposição</span><strong id="kReposition">0</strong></div>
+<div class="card kpi ok"><span>Estoque OK</span><strong id="kOk">0</strong></div>
+</div>
+<div class="card" style="margin-top:16px"><h3>Resumo</h3><div id="homeList"></div></div>
+</section>
+
+<section id="materials" class="section">
+<div class="top"><div><h1>Materiais</h1><div class="muted">Cadastre estoque mínimo e estoque ideal.</div></div><button onclick="openMaterial()">＋ Novo material</button></div>
+<div class="toolbar"><input id="materialSearch" placeholder="Pesquisar material ou código..." oninput="renderMaterials()"><select id="materialFilter" onchange="renderMaterials()"><option value="">Todos os status</option><option value="critical">Críticos</option><option value="reposition">Reposição</option><option value="ok">OK</option></select></div>
+<div class="tablewrap"><table><thead><tr><th>Código</th><th>Material</th><th>Un.</th><th>Atual</th><th>Mínimo</th><th>Ideal</th><th>Comprar</th><th>Status</th><th></th></tr></thead><tbody id="materialsBody"></tbody></table></div>
+</section>
+
+<section id="count" class="section">
+<div class="top"><div><h1>Realizar contagem</h1><div class="muted" id="countInfo">Comece uma nova contagem.</div></div><button class="secondary" onclick="startCount()">↻ Nova contagem</button></div>
+<div class="toolbar"><input id="countSearch" placeholder="Pesquisar durante a contagem..." oninput="renderCount()"><button onclick="finishCount()">✓ Finalizar contagem</button></div>
+<div id="countBody"></div>
+</section>
+
+<section id="replenishment" class="section">
+<div class="top"><div><h1>Lista de reposição</h1><div class="muted">Quantidade calculada: estoque ideal − estoque contado.</div></div><button onclick="openQuoteFromReplenishment()">📄 Gerar orçamento</button></div>
+<div class="toolbar"><select id="repSupplier" onchange="renderReplenishment()"><option value="">Todos os fornecedores</option></select><button class="secondary" onclick="selectAllRep(true)">Selecionar todos</button><button class="secondary" onclick="selectAllRep(false)">Limpar seleção</button></div>
+<div class="tablewrap"><table><thead><tr><th></th><th>Material</th><th>Atual</th><th>Ideal</th><th>Sugestão</th><th>Quantidade final</th><th>Fornecedor</th></tr></thead><tbody id="repBody"></tbody></table></div>
+</section>
+
+<section id="quotes" class="section">
+<div class="top"><div><h1>Orçamentos</h1><div class="muted">Documentos gerados para fornecedores.</div></div></div>
+<div class="tablewrap"><table><thead><tr><th>Nº</th><th>Data</th><th>Fornecedor</th><th>Itens</th><th></th></tr></thead><tbody id="quotesBody"></tbody></table></div>
+</section>
+
+<section id="suppliers" class="section">
+<div class="top"><div><h1>Fornecedores</h1><div class="muted">Distribuidoras vinculadas aos materiais.</div></div><button onclick="openSupplier()">＋ Novo fornecedor</button></div>
+<div class="tablewrap"><table><thead><tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th></th></tr></thead><tbody id="suppliersBody"></tbody></table></div>
+</section>
+
+<section id="history" class="section">
+<div class="top"><div><h1>Histórico de contagens</h1><div class="muted">Registro das contagens finalizadas.</div></div></div>
+<div class="tablewrap"><table><thead><tr><th>Data</th><th>Itens contados</th><th>Itens para reposição</th><th>Quantidade a comprar</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+</section>
+
+<section id="settings" class="section">
+<div class="top"><div><h1>Configurações</h1><div class="muted">Dados usados automaticamente nos orçamentos.</div></div></div>
+<div class="card"><div class="formgrid">
+<div class="field"><label>Nome da empresa</label><input id="setName"></div><div class="field"><label>Razão social</label><input id="setLegal"></div><div class="field"><label>CNPJ</label><input id="setCnpj"></div><div class="field"><label>Telefone</label><input id="setPhone"></div><div class="field"><label>E-mail</label><input id="setEmail"></div><div class="field"><label>Almoxarifado / setor</label><input id="setDept"></div><div class="field"><label>Logo / imagem da empresa</label><input id="setImage" type="file" accept="image/*" onchange="previewFile(this,'setPreview')"><div style="margin-top:8px"><img id="setPreview" class="logo-preview" src="${esc(db.settings.image||'')}" ${db.settings.image?'':'style="display:none"'}></div></div><div class="field full"><label>Endereço</label><input id="setAddress"></div><div class="actions full"><button onclick="saveSettings()">Salvar configurações</button></div></div></div>
+<div class="card" style="margin-top:15px"><h3>Backup</h3><p class="muted">Exporte seus dados antes de trocar de aparelho ou navegador.</p><button onclick="exportBackup()">⬇ Exportar backup</button> <button class="secondary" onclick="document.getElementById('backupFile').click()">⬆ Importar backup</button><input id="backupFile" type="file" accept=".json" style="display:none" onchange="importBackup(event)"></div>
+</section>
+</main></div>
+
+<div class="modal" id="modal"><div class="modalbox" id="modalContent"></div></div>
+<div class="toast" id="toast"></div>
+<div class="print-doc" id="printDoc"></div>
+
+<script>
+const KEY='almoxarifado_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||{materials:[],suppliers:[],quotes:[],history:[],settings:{},count:null};
+function save(){localStorage.setItem(KEY,JSON.stringify(db));updateAll()}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function toast(t){let e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
+function nav(page){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(page).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));updateAll()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>nav(b.dataset.page));
+function status(m){if(m.current==null)return 'pending';if(m.current<m.min)return 'critical';if(m.current<m.ideal)return 'reposition';return 'ok'}
+function buy(m){return Math.max((+m.ideal||0)-(+m.current||0),0)}
+function statusLabel(s){return {critical:'🔴 Crítico',reposition:'🟡 Reposição',ok:'🟢 OK',pending:'⚪ Pendente'}[s]}
+function updateAll(){renderDashboard();renderMaterials();renderReplenishment();renderQuotes();renderSuppliers();renderHistory();loadSettings()}
+function renderDashboard(){
+let ms=db.materials, c=ms.filter(m=>status(m)==='critical').length,r=ms.filter(m=>status(m)==='reposition').length,o=ms.filter(m=>status(m)==='ok').length;
+kTotal.textContent=ms.length;kCritical.textContent=c;kReposition.textContent=r;kOk.textContent=o;
+homeList.innerHTML=ms.length?`<p><b>${c+r}</b> materiais estão abaixo do estoque ideal.</p><p>Quantidade total sugerida para compra: <b>${ms.reduce((a,m)=>a+buy(m),0)}</b> unidades.</p>`:'<div class="empty">Cadastre seus primeiros materiais.</div>';
+}
+function renderMaterials(){
+let q=(materialSearch?.value||'').toLowerCase(),f=materialFilter?.value||'';
+let arr=db.materials.filter(m=>(m.name+' '+m.code).toLowerCase().includes(q)).filter(m=>!f||status(m)===f);
+materialsBody.innerHTML=arr.length?arr.map(m=>`<tr><td>${esc(m.code)}</td><td><b>${esc(m.name)}</b><br><small class="muted">${esc(m.category||'')}</small></td><td>${esc(m.unit)}</td><td>${m.current==null?'—':m.current}</td><td>${m.min}</td><td>${m.ideal}</td><td><b>${buy(m)}</b></td><td><span class="badge ${status(m)}">${statusLabel(status(m))}</span></td><td><button class="secondary" onclick="openMaterial('${m.id}')">Editar</button></td></tr>`).join(''):'<tr><td colspan="9" class="empty">Nenhum material encontrado.</td></tr>';
+}
+function openMaterial(id){
+let m=db.materials.find(x=>x.id===id)||{code:'',name:'',category:'',unit:'UN',current:null,min:0,ideal:0,supplierId:'',location:'',notes:''};
+modalContent.innerHTML=`<h2>${id?'Editar':'Novo'} material</h2><div class="formgrid">
+<div class="field"><label>Código</label><input id="mCode" value="${esc(m.code)}"></div><div class="field"><label>Nome *</label><input id="mName" value="${esc(m.name)}"></div><div class="field"><label>Categoria</label><input id="mCat" value="${esc(m.category)}"></div>
+<div class="field"><label>Unidade</label><select id="mUnit">${['UN','CX','PCT','RESMA','L','KG','GALÃO','ROLO'].map(u=>`<option ${u===m.unit?'selected':''}>${u}</option>`).join('')}</select></div>
+<div class="field"><label>Estoque atual</label><input id="mCurrent" type="number" min="0" value="${m.current??''}" placeholder="Opcional"></div>
+<div class="field"><label>Estoque mínimo *</label><input id="mMin" type="number" min="0" value="${m.min}"></div>
+<div class="field"><label>Estoque ideal *</label><input id="mIdeal" type="number" min="0" value="${m.ideal}"></div>
+<div class="field"><label>Fornecedor</label><select id="mSupplier"><option value="">Não definido</option>${db.suppliers.map(s=>`<option value="${s.id}" ${s.id===m.supplierId?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+<div class="field"><label>Localização</label><input id="mLocation" value="${esc(m.location)}"></div><div class="field"><label>Imagem do produto</label><input id="mImage" type="file" accept="image/*" onchange="previewFile(this,'mPreview')"><div style="margin-top:8px"><img id="mPreview" class="img-preview" src="${esc(m.image||'')}" ${m.image?'':'style="display:none"'}></div></div><div class="field full"><label>Observações</label><textarea id="mNotes">${esc(m.notes)}</textarea></div></div>
+<div class="actions"><button class="secondary" onclick="closeModal()">Cancelar</button>${id?`<button class="danger" onclick="deleteMaterial('${id}')">Excluir</button>`:''}<button onclick="saveMaterial('${id||''}')">Salvar</button></div>`;
+modal.classList.add('open');
+}
+async function saveMaterial(id){
+let name=mName.value.trim(),min=+mMin.value,ideal=+mIdeal.value,current=mCurrent.value===''?null:+mCurrent.value;
+if(!name)return toast('Informe o nome do material.');if(min<0||ideal<0||current<0)return toast('Valores não podem ser negativos.');if(min>ideal)return toast('O estoque mínimo não pode ser maior que o ideal.');
+let image=id?(db.materials.find(x=>x.id===id)?.image||''):'';if(mImage.files[0])image=await fileToDataURL(mImage.files[0]);let obj={id:id||crypto.randomUUID(),code:mCode.value.trim(),name,category:mCat.value.trim(),unit:mUnit.value,current,min,ideal,supplierId:mSupplier.value,location:mLocation.value.trim(),notes:mNotes.value.trim(),image,updated:new Date().toISOString()};
+if(id)db.materials=db.materials.map(x=>x.id===id?obj:x);else db.materials.push(obj);closeModal();save();toast('Material salvo.');nav('materials');
+}
+function deleteMaterial(id){if(confirm('Excluir este material?')){db.materials=db.materials.filter(x=>x.id!==id);closeModal();save();toast('Material excluído.')}}
+function closeModal(){modal.classList.remove('open')}
+function startCount(){
+db.count={started:new Date().toISOString(),items:{}};db.materials.forEach(m=>db.count.items[m.id]={status:'pending',qty:null});save();nav('count');toast('Nova contagem iniciada.');
+}
+function renderCount(){
+if(!db.count){countInfo.textContent='Nenhuma contagem ativa.';countBody.innerHTML='<div class="card empty">Clique em "Nova contagem" para começar.</div>';return}
+let q=(countSearch?.value||'').toLowerCase(),arr=db.materials.filter(m=>(m.name+' '+m.code).toLowerCase().includes(q)),items=db.count.items;
+let counted=Object.values(items).filter(x=>x.status==='counted').length;
+countInfo.textContent=`Iniciada em ${new Date(db.count.started).toLocaleString('pt-BR')} • ${counted}/${db.materials.length} contados`;
+countBody.innerHTML=arr.length?arr.map(m=>{let x=items[m.id]||{status:'pending',qty:null};let qty=x.qty;let sug=qty==null?'—':Math.max(m.ideal-qty,0);return `<div class="card count-card" style="margin-bottom:10px"><div><b>${esc(m.name)}</b><div class="muted">${esc(m.code)} • Ideal: ${m.ideal} ${esc(m.unit)}</div></div><input type="number" min="0" value="${qty??''}" placeholder="Quantidade" onchange="setCount('${m.id}',this.value)"><div><span class="badge ${qty==null?'pending':(qty<m.min?'critical':qty<m.ideal?'reposition':'ok')}">${qty==null?'Pendente':`Comprar: ${sug}`}</span></div></div>`}).join(''):'<div class="empty">Nenhum material encontrado.</div>';
+}
+function setCount(id,val){if(!db.count)return;let n=val===''?null:+val;if(n!==null&&n<0)return toast('Quantidade inválida.');db.count.items[id]={status:n===null?'pending':'counted',qty:n};save();renderCount()}
+function finishCount(){
+if(!db.count)return toast('Nenhuma contagem ativa.');
+let vals=Object.values(db.count.items),pending=vals.filter(x=>x.status!=='counted').length;
+if(pending&&!confirm(`Ainda existem ${pending} produtos pendentes. Finalizar mesmo assim?`))return;
+let totalBuy=0,rep=0;db.materials.forEach(m=>{let x=db.count.items[m.id];if(x?.status==='counted'){m.current=x.qty;m.lastCount=new Date().toISOString();let b=buy(m);if(b>0)rep++;totalBuy+=b;}});
+db.history.unshift({date:new Date().toISOString(),counted:vals.filter(x=>x.status==='counted').length,replenishment:rep,totalBuy});
+db.count=null;save();nav('replenishment');toast('Contagem finalizada e estoque atualizado.');
+}
+function fillSupplierFilter(){let s=repSupplier.value;repSupplier.innerHTML='<option value="">Todos os fornecedores</option>'+db.suppliers.map(x=>`<option value="${x.id}" ${x.id===s?'selected':''}>${esc(x.name)}</option>`).join('')}
+function renderReplenishment(){
+fillSupplierFilter();let f=repSupplier?.value||'',arr=db.materials.filter(m=>buy(m)>0&&(!f||m.supplierId===f));
+repBody.innerHTML=arr.length?arr.map(m=>{let sup=db.suppliers.find(s=>s.id===m.supplierId);m.orderQty=m.orderQty??buy(m);return `<tr><td><input type="checkbox" class="repcheck" data-id="${m.id}" checked></td><td><b>${esc(m.name)}</b><br><small>${esc(m.code)}</small></td><td>${m.current??'—'}</td><td>${m.ideal}</td><td>${buy(m)}</td><td><input type="number" min="0" value="${m.orderQty}" style="width:100px;padding:8px" onchange="setOrderQty('${m.id}',this.value)"></td><td>${esc(sup?.name||'Não definido')}</td></tr>`}).join(''):'<tr><td colspan="7" class="empty">Nenhum material precisa de reposição.</td></tr>';
+}
+function setOrderQty(id,v){let m=db.materials.find(x=>x.id===id);if(m)m.orderQty=Math.max(+v||0,0);save()}
+function selectAllRep(on){document.querySelectorAll('.repcheck').forEach(x=>x.checked=on)}
+function openQuoteFromReplenishment(){
+let ids=[...document.querySelectorAll('.repcheck:checked')].map(x=>x.dataset.id);if(!ids.length)return toast('Selecione ao menos um item.');
+let grouped={};ids.forEach(id=>{let m=db.materials.find(x=>x.id===id);let sid=m.supplierId||'none';(grouped[sid]??=[]).push(m)});
+let blocks=Object.entries(grouped).map(([sid,ms])=>`<div class="card" style="margin-bottom:12px"><h3>${esc(db.suppliers.find(s=>s.id===sid)?.name||'Fornecedor não definido')}</h3><ul>${ms.map(m=>`<li>${esc(m.name)} — ${m.orderQty??buy(m)} ${esc(m.unit)}</li>`).join('')}</ul></div>`).join('');
+modalContent.innerHTML=`<h2>Gerar orçamento</h2><p class="muted">Foram encontrados ${ids.length} itens. Os produtos serão separados por fornecedor.</p>${blocks}<div class="actions"><button class="secondary" onclick="closeModal()">Cancelar</button><button onclick="generateQuotes(${JSON.stringify(ids).replace(/"/g,'&quot;')})">Gerar documentos</button></div>`;modal.classList.add('open');
+}
+function generateQuotes(ids){
+let grouped={};ids.forEach(id=>{let m=db.materials.find(x=>x.id===id),sid=m.supplierId||'none';(grouped[sid]??=[]).push(m)});
+Object.entries(grouped).forEach(([sid,ms])=>{let number='ORC-'+Date.now().toString().slice(-8);db.quotes.unshift({id:crypto.randomUUID(),number,date:new Date().toISOString(),supplierId:sid,items:ms.map(m=>({id:m.id,qty:m.orderQty??buy(m)}))})});
+closeModal();save();nav('quotes');toast('Orçamento(s) gerado(s).');
+}
+function renderQuotes(){quotesBody.innerHTML=db.quotes.length?db.quotes.map(q=>`<tr><td>${q.number}</td><td>${new Date(q.date).toLocaleDateString('pt-BR')}</td><td>${esc(db.suppliers.find(s=>s.id===q.supplierId)?.name||'Fornecedor não definido')}</td><td>${q.items.length}</td><td><button onclick="printQuote('${q.id}')">🖨️ Imprimir / PDF</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum orçamento gerado.</td></tr>'}
+function printQuote(id){
+let q=db.quotes.find(x=>x.id===id),s=db.suppliers.find(x=>x.id===q.supplierId),set=db.settings;
+let rows=q.items.map(i=>{let m=db.materials.find(x=>x.id===i.id);return `<tr><td>${esc(m.code)}</td><td>${m.image?`<img src="${esc(m.image)}" class="quote-product-img">`:``}${esc(m.name)}</td><td>${esc(m.unit)}</td><td>${i.qty}</td><td></td><td></td></tr>`}).join('');
+printDoc.innerHTML=`<div class="print-head">${set.image?`<img src="${esc(set.image)}" class="logo-preview" style="width:80px;height:80px">`:``}<h1>SOLICITAÇÃO DE ORÇAMENTO</h1><div class="print-meta"><span><b>Nº:</b> ${q.number}</span><span><b>Data:</b> ${new Date(q.date).toLocaleDateString('pt-BR')}</span><span><b>Empresa:</b> ${esc(set.name||'')}</span><span><b>Almoxarifado:</b> ${esc(set.dept||'')}</span><span><b>Fornecedor:</b> ${s?.image?`<img src="${esc(s.image)}" class="quote-product-img">`:``}${esc(s?.name||'')}</span><span><b>CNPJ:</b> ${esc(s?.cnpj||'')}</span></div></div><table><thead><tr><th>Código</th><th>Descrição</th><th>Un.</th><th>Quantidade</th><th>Valor unitário</th><th>Valor total</th></tr></thead><tbody>${rows}</tbody></table><div class="print-footer"><p><b>Condição de pagamento:</b> __________________________________________</p><p><b>Prazo de entrega:</b> ____________________ &nbsp; <b>Validade da proposta:</b> ____________________</p><p><b>Observações:</b> __________________________________________________________</p><br><p>Solicitante: ${esc(set.name||'')} — ${esc(set.phone||'')} — ${esc(set.email||'')}</p></div>`;
+setTimeout(()=>window.print(),100);
+}
+function openSupplier(id){
+let s=db.suppliers.find(x=>x.id===id)||{name:'',cnpj:'',phone:'',whatsapp:'',email:'',address:'',contact:'',notes:''};
+modalContent.innerHTML=`<h2>${id?'Editar':'Novo'} fornecedor</h2><div class="formgrid"><div class="field"><label>Nome *</label><input id="sName" value="${esc(s.name)}"></div><div class="field"><label>CNPJ</label><input id="sCnpj" value="${esc(s.cnpj)}"></div><div class="field"><label>Telefone</label><input id="sPhone" value="${esc(s.phone)}"></div><div class="field"><label>WhatsApp</label><input id="sWhatsapp" value="${esc(s.whatsapp)}"></div><div class="field"><label>E-mail</label><input id="sEmail" value="${esc(s.email)}"></div><div class="field"><label>Contato</label><input id="sContact" value="${esc(s.contact)}"></div><div class="field"><label>Logo / imagem da distribuidora</label><input id="sImage" type="file" accept="image/*" onchange="previewFile(this,'sPreview')"><div style="margin-top:8px"><img id="sPreview" class="logo-preview" src="${esc(s.image||'')}" ${s.image?'':'style="display:none"'}></div></div><div class="field full"><label>Endereço</label><input id="sAddress" value="${esc(s.address)}"></div><div class="field full"><label>Observações</label><textarea id="sNotes">${esc(s.notes)}</textarea></div></div><div class="actions"><button class="secondary" onclick="closeModal()">Cancelar</button>${id?`<button class="danger" onclick="deleteSupplier('${id}')">Excluir</button>`:''}<button onclick="saveSupplier('${id||''}')">Salvar</button></div>`;modal.classList.add('open')
+}
+async function saveSupplier(id){
+let name=sName.value.trim();if(!name)return toast('Informe o nome.');
+let image=id?(db.suppliers.find(x=>x.id===id)?.image||''):'';if(sImage.files[0])image=await fileToDataURL(sImage.files[0]);let o={id:id||crypto.randomUUID(),name,cnpj:sCnpj.value,phone:sPhone.value,whatsapp:sWhatsapp.value,email:sEmail.value,contact:sContact.value,address:sAddress.value,notes:sNotes.value,image};
+if(id)db.suppliers=db.suppliers.map(x=>x.id===id?o:x);else db.suppliers.push(o);closeModal();save();toast('Fornecedor salvo.');nav('suppliers')
+}
+function deleteSupplier(id){if(confirm('Excluir fornecedor? Os materiais vinculados ficarão sem fornecedor.')){db.suppliers=db.suppliers.filter(x=>x.id!==id);db.materials.forEach(m=>{if(m.supplierId===id)m.supplierId=''});closeModal();save()}}
+function renderSuppliers(){suppliersBody.innerHTML=db.suppliers.length?db.suppliers.map(s=>`<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.cnpj)}</td><td>${esc(s.phone)}</td><td>${esc(s.whatsapp)}</td><td>${esc(s.email)}</td><td><button class="secondary" onclick="openSupplier('${s.id}')">Editar</button></td></tr>`).join(''):'<tr><td colspan="6" class="empty">Nenhum fornecedor cadastrado.</td></tr>'}
+function renderHistory(){historyBody.innerHTML=db.history.length?db.history.map(h=>`<tr><td>${new Date(h.date).toLocaleString('pt-BR')}</td><td>${h.counted}</td><td>${h.replenishment}</td><td>${h.totalBuy}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Nenhuma contagem finalizada.</td></tr>'}
+function loadSettings(){let s=db.settings;setName.value=s.name||'';setLegal.value=s.legal||'';setCnpj.value=s.cnpj||'';setPhone.value=s.phone||'';setEmail.value=s.email||'';setDept.value=s.dept||'';setAddress.value=s.address||'';setImage.value='';setPreview.src=s.image||'';setPreview.style.display=s.image?'block':'none'}
+async function saveSettings(){let image=db.settings.image||'';if(setImage.files[0])image=await fileToDataURL(setImage.files[0]);db.settings={name:setName.value,legal:setLegal.value,cnpj:setCnpj.value,phone:setPhone.value,email:setEmail.value,dept:setDept.value,address:setAddress.value,image};save();toast('Configurações salvas.')}
+function exportBackup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-almoxarifado-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.materials||!x.suppliers)throw 0;if(confirm('Importar este backup e substituir os dados atuais?')){db=x;save();toast('Backup importado.')}}catch{toast('Backup inválido.')}};r.readAsText(f)}
+function fileToDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})} function previewFile(input,id){const f=input.files[0],img=document.getElementById(id);if(!f){img.style.display='none';return}const r=new FileReader();r.onload=()=>{img.src=r.result;img.style.display='block'};r.readAsDataURL(f)} updateAll();renderCount();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
+}
+</script>
+</body>
+</html>
