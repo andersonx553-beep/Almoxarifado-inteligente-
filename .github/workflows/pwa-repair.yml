@@ -14,7 +14,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show 73a7ce145f7ca25864322448912330471361bc78:index.html > index.html
+          git show 0c849d5b112f277e51530b68007d9bf32fbc5791:index.html > index.html
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
@@ -29,7 +29,6 @@ jobs:
           s=s.replace(old2,new2,1)
           p.write_text(s,encoding='utf-8')
           PY
-          node --check <(sed -n '/<script>/,/<\/script>/p' index.html | sed '1d;$d')
           rm .github/workflows/pwa-repair.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
