@@ -1,5 +1,5 @@
-const CACHE='almoxarifado-v1';
-const ASSETS=['./','./index.html','./manifest.json'];
+const CACHE='almoxarifado-v2';
+const ASSETS=['./','./index.html','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
