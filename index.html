@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Almoxarifado Inteligente — V2.4 + Importação de Fornecedores</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#18212b;--muted:#687585;--line:#e4e8ed;--accent:#2457d6;--danger:#c62828;--warn:#b26a00;--ok:#147a43;--shadow:0 8px 25px rgba(20,35,55,.08)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Arial,sans-serif;color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;background:var(--accent);color:white;font-weight:700}
+button.secondary{background:#eef2f7;color:var(--text)}button.danger{background:#b42318}.app{display:flex;min-height:100vh}
+aside{width:245px;background:#111827;color:#fff;padding:22px 14px;position:sticky;top:0;height:100vh}
+.logo{font-size:20px;font-weight:800;padding:8px 10px 24px}.logo small{display:block;color:#9ca3af;font-size:11px;margin-top:4px}
+nav button{display:block;width:100%;text-align:left;background:transparent;color:#d1d5db;margin:4px 0}nav button.active,nav button:hover{background:#24324a;color:#fff}
+main{flex:1;padding:26px;max-width:1500px;margin:auto;width:100%}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}.top h1{margin:0;font-size:27px}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.kpi strong{display:block;font-size:30px;margin-top:8px}.kpi.danger strong{color:var(--danger)}.kpi.warn strong{color:var(--warn)}.kpi.ok strong{color:var(--ok)}
+.section{display:none}.section.active{display:block}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select{min-height:42px;padding:9px 11px;border:1px solid #d5dbe3;border-radius:10px;background:white}
+table{width:100%;border-collapse:collapse;background:white}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px}th,td{padding:12px 13px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{background:#f8fafc;font-size:12px;color:var(--muted);text-transform:uppercase}tr:last-child td{border-bottom:0}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:800}.critical{background:#fde8e8;color:var(--danger)}.reposition{background:#fff1d8;color:var(--warn)}.ok{background:#e4f6ec;color:var(--ok)}.pending{background:#eef1f5;color:#5c6775}
+.formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #d5dbe3;border-radius:10px;background:white}.field textarea{min-height:80px;resize:vertical}.full{grid-column:1/-1}
+.actions{display:flex;gap:9px;justify-content:flex-end;margin-top:15px}.empty{padding:35px;text-align:center;color:var(--muted)}.supplier-products{display:grid;gap:8px;margin-top:10px}.supplier-product{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:10px}.supplier-product small{color:var(--muted)}.section-note{font-size:12px;color:var(--muted);margin-top:5px}
+.count-card{display:grid;grid-template-columns:1fr 160px 150px;gap:14px;align-items:center}.count-card input{width:100%;padding:13px;border:2px solid #dbe1e8;border-radius:10px;font-size:20px}.count-card input:focus{outline:none;border-color:var(--accent)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}.modal.open{display:flex}.modalbox{background:white;border-radius:18px;padding:22px;max-width:800px;width:100%;max-height:90vh;overflow:auto}
+.img-preview{width:72px;height:72px;border-radius:12px;object-fit:contain;background:#f3f5f8;border:1px solid #dce2e9;display:block}.logo-preview{width:90px;height:90px;border-radius:14px;object-fit:contain;background:#f3f5f8;border:1px solid #dce2e9}.quote-product-img{width:34px;height:34px;object-fit:contain;vertical-align:middle;margin-right:8px;border-radius:6px}.toast{position:fixed;right:20px;bottom:20px;background:#111827;color:#fff;padding:13px 17px;border-radius:10px;display:none;z-index:30}.toast.show{display:block}
+
+.import-btn{background:#0f766e}
+.import-help{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #dce7f7;background:#f8fbff;border-radius:12px;margin-bottom:14px}
+.import-drop{border:2px dashed #b8c7da;border-radius:14px;padding:24px;text-align:center;background:#fbfcfe}
+.import-drop.drag{border-color:#2457d6;background:#f3f7ff}
+.import-table{max-height:48vh;overflow:auto;border:1px solid #e4e8ed;border-radius:12px}
+.import-table table{min-width:980px}
+.import-table input,.import-table select{width:100%;padding:7px 8px;border:1px solid #d7dde5;border-radius:8px;background:white}
+.import-table th{position:sticky;top:0;background:#f7f9fb;z-index:1}
+.import-row-new{background:#f7fff9}
+.import-row-existing{background:#fffaf0}
+.import-row-error{background:#fff5f5}
+.import-status{font-size:12px;font-weight:800;white-space:nowrap}
+.import-summary{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.import-summary .badge{display:inline-flex;align-items:center;gap:4px}
+.print-doc{display:none}
+@media(max-width:900px){aside{width:190px}.grid{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:repeat(2,1fr)}.count-card{grid-template-columns:1fr 120px}}
+@media(max-width:650px){aside{position:fixed;bottom:0;top:auto;height:auto;width:100%;z-index:5;padding:5px;background:#111827}.logo{display:none}nav{display:grid;grid-template-columns:repeat(5,1fr)}nav button{font-size:10px;text-align:center;padding:9px 3px;margin:0}main{padding:17px 13px 80px}.grid{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}.top h1{font-size:21px}.count-card{grid-template-columns:1fr}.count-card input{font-size:18px}}
+@media print{body{background:white}.app{display:none}.print-doc{display:block;padding:28px;font-family:Arial,sans-serif}.print-head{border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:18px}.print-head h1{margin:0 0 8px;font-size:22px}.print-meta{display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:12px}.print-doc table{border:1px solid #222}.print-doc th,.print-doc td{border:1px solid #222;padding:8px}.print-footer{margin-top:25px;font-size:12px}.no-print{display:none!important}}
+
+.area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px}.area-chip{border:1px solid #d7e3f2;background:#fff;color:#1e3a5f;border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;font-weight:650;transition:.15s}.area-chip:hover{border-color:#4d83c2;transform:translateY(-1px)}.area-chip.active{background:#eaf3ff;border-color:#2774c6;box-shadow:0 0 0 2px #d8eaff}.area-chip small{display:block;color:#718096;font-weight:500;margin-top:3px}.count-card{display:grid;grid-template-columns:minmax(0,1fr) 150px 130px;gap:14px;align-items:center}.material-selector{margin-bottom:14px}.count-card input{width:100%;font-size:16px;font-weight:650}.count-group-title{margin:18px 0 8px;color:#173b67;font-size:14px;text-transform:uppercase;letter-spacing:.04em}@media(max-width:700px){.count-card{grid-template-columns:1fr}.area-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside><div class="logo">📦 Almoxarifado <small>Controle inteligente</small></div>
+<nav>
+<button data-page="home" class="active">🏠 Início</button>
+<button data-page="materials">📦 Materiais</button>
+<button data-page="count">📝 Contagem</button>
+<button data-page="movements">🔄 Movimentações</button>
+<button data-page="deliveries">📋 Notas de entrega</button>
+<button data-page="replenishment">🛒 Reposição</button>
+<button data-page="quotes">📄 Orçamentos</button>
+<button data-page="suppliers">🚚 Fornecedores</button>
+<button data-page="history">📊 Histórico</button>
+<button data-page="settings">⚙️ Config.</button>
+</nav></aside>
+<main>
+<section id="home" class="section active">
+<div class="top"><div><h1>Almoxarifado</h1><div class="muted">Visão geral e controle de reposição</div></div><button onclick="startCount()">📝 Nova contagem</button></div>
+<div class="grid">
+<div class="card kpi"><span>Total de materiais</span><strong id="kTotal">0</strong></div>
+<div class="card kpi danger"><span>Críticos</span><strong id="kCritical">0</strong></div>
+<div class="card kpi warn"><span>Em reposição</span><strong id="kReposition">0</strong></div>
+<div class="card kpi ok"><span>Estoque OK</span><strong id="kOk">0</strong></div>
+</div>
+<div class="card" style="margin-top:16px"><h3>Resumo</h3><div id="homeList"></div></div>
+</section>
+
+<section id="materials" class="section">
+<div class="top"><div><h1>Materiais</h1><div class="muted">Cadastre estoque mínimo e estoque ideal.</div><div class="card" style="margin-bottom:14px;background:#f8fbff;border-color:#dce7f7"><h3 style="margin:0 0 6px">Estrutura do Almoxarifado Aquaville</h3><div class="muted">Organização em <b>Área → Subgrupo → Material</b>. Os itens exemplares entram como cadastro pendente e <b>não são tratados como estoque zero</b> até a primeira contagem.</div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="import-btn" onclick="openImportMaterials()">⇧ Importar documento</button><button onclick="openMaterial()">＋ Novo material</button></div></div>
+<div class="card material-selector">
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+    <div><h3 style="margin:0 0 4px">O que você quer consultar?</h3><div class="muted">Selecione a área. O sistema mostrará os materiais daquela área de uma vez.</div></div>
+    <span class="badge" id="materialSelectionBadge">TODOS</span>
+  </div>
+  <div class="area-grid" id="materialAreaGrid" style="margin-top:14px"></div>
+  <div class="formgrid" style="margin-top:14px">
+    <div class="field"><label>Subgrupo</label><select id="materialSubgroup" onchange="renderMaterials()"><option value="">Todos os subgrupos</option></select></div>
+  </div>
+</div>
+<div class="toolbar"><input id="materialSearch" placeholder="Pesquisar material ou código..." oninput="renderMaterials()"><select id="materialFilter" onchange="renderMaterials()"><option value="">Todos os status</option><option value="critical">Críticos</option><option value="reposition">Reposição</option><option value="ok">OK</option></select></div>
+<div class="tablewrap"><table><thead><tr><th>Código</th><th>Material</th><th>Área</th><th>Subgrupo</th><th>Un.</th><th>Atual</th><th>Mínimo</th><th>Ideal</th><th>Comprar</th><th>Status</th><th></th></tr></thead><tbody id="materialsBody"></tbody></table></div>
+</section>
+
+<section id="count" class="section">
+<div class="top">
+  <div><h1>Realizar contagem</h1><div class="muted" id="countInfo">Escolha uma área para carregar automaticamente os materiais que deseja contar.</div></div>
+  <button class="secondary" onclick="startCount()">↻ Nova contagem</button>
+</div>
+
+<div class="card count-selector" style="margin-bottom:14px">
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+    <div><h3 style="margin:0 0 4px">O que você quer contar?</h3><div class="muted">Selecione a área. O sistema mostrará todos os materiais daquela área de uma vez.</div></div>
+    <span class="badge" id="countSelectionBadge">TODOS</span>
+  </div>
+  <div class="area-grid" id="countAreaGrid" style="margin-top:14px"></div>
+  <div class="formgrid" style="margin-top:14px">
+    <div class="field"><label>Subgrupo</label><select id="countSubgroup" onchange="renderCount()"><option value="">Todos os subgrupos</option></select></div>
+    <div class="field"><label>Busca opcional</label><input id="countSearch" placeholder="Filtrar por nome ou código..." oninput="renderCount()"></div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <div class="muted" id="countBatchInfo">Nenhuma área selecionada.</div>
+  <button onclick="finishCount()">✓ Finalizar contagem</button>
+</div>
+<div id="countBody"></div>
+</section>
+
+<section id="movements"<section id="movements" class="section">
+<div class="top"><div><h1>Movimentações</h1><div class="muted">Registre entradas, saídas e ajustes para construir o histórico real de consumo.</div></div><button onclick="openMovement()">＋ Nova movimentação</button></div>
+<div class="toolbar"><select id="movementType" onchange="renderMovements()"><option value="">Todos os tipos</option><option value="entry">Entradas</option><option value="exit">Saídas</option><option value="adjustment">Ajustes</option></select><input id="movementSearch" placeholder="Pesquisar material..." oninput="renderMovements()"></div>
+<div class="tablewrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Material</th><th>Quantidade</th><th>Estoque após</th><th>Motivo</th></tr></thead><tbody id="movementsBody"></tbody></table></div>
+</section>
+
+<section id="deliveries" class="section">
+<div class="top"><div><h1>Notas de entrega</h1><div class="muted">Histórico das saídas com identificação de quem entregou, quem recebeu, data, hora e local.</div></div></div>
+<div class="tablewrap"><table><thead><tr><th>Nº</th><th>Data/Hora</th><th>Itens</th><th>Quem entregou</th><th>Quem recebeu</th><th>Local</th><th></th></tr></thead><tbody id="deliveriesBody"></tbody></table></div>
+</section>
+
+<section id="replenishment" class="section">
+<div class="top"><div><h1>Lista de reposição</h1><div class="muted">Quantidade calculada: estoque ideal − estoque contado.</div></div><button onclick="openQuoteFromReplenishment()">📄 Gerar orçamento</button></div>
+<div class="toolbar"><select id="repSupplier" onchange="renderReplenishment()"><option value="">Todos os fornecedores</option></select><button class="secondary" onclick="selectAllRep(true)">Selecionar todos</button><button class="secondary" onclick="selectAllRep(false)">Limpar seleção</button></div>
+<div class="tablewrap"><table><thead><tr><th></th><th>Material</th><th>Atual</th><th>Ideal</th><th>Sugestão</th><th>Quantidade final</th><th>Fornecedor</th></tr></thead><tbody id="repBody"></tbody></table></div>
+</section>
+
+<section id="quotes" class="section">
+<div class="top"><div><h1>Orçamentos</h1><div class="muted">Documentos gerados para fornecedores.</div></div></div>
+<div class="tablewrap"><table><thead><tr><th>Nº</th><th>Data</th><th>Fornecedor</th><th>Itens</th><th></th></tr></thead><tbody id="quotesBody"></tbody></table></div>
+</section>
+
+<section id="suppliers" class="section">
+<div class="top"><div><h1>Fornecedores</h1><div class="muted">Cadastre a finalidade e acompanhe os materiais normalmente vinculados a cada fornecedor.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="import-btn" onclick="openSupplierImport()">⇧ Importar documento</button><button onclick="openSupplier()">＋ Novo fornecedor</button></div></div>
+<div class="toolbar"><input id="supplierSearch" placeholder="Pesquisar fornecedor ou CNPJ..." oninput="renderSuppliers()"><select id="supplierPurposeFilter" onchange="renderSuppliers()"><option value="">Todas as finalidades</option></select></div>
+<div class="tablewrap"><table><thead><tr><th>Nome</th><th>Finalidade</th><th>Produtos vinculados</th><th>CNPJ</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th></th></tr></thead><tbody id="suppliersBody"></tbody></table></div>
+</section>
+
+<section id="history" class="section">
+<div class="top"><div><h1>Histórico de contagens</h1><div class="muted">Registro das contagens finalizadas.</div></div></div>
+<div class="tablewrap"><table><thead><tr><th>Data</th><th>Itens contados</th><th>Itens para reposição</th><th>Quantidade a comprar</th></tr></thead><tbody id="historyBody"></tbody></table></div>
+</section>
+
+<section id="settings" class="section">
+<div class="top"><div><h1>Configurações</h1><div class="muted">Dados usados automaticamente nos orçamentos.</div></div></div>
+<div class="card"><div class="formgrid">
+<div class="field"><label>Nome da empresa</label><input id="setName"></div><div class="field"><label>Razão social</label><input id="setLegal"></div><div class="field"><label>CNPJ</label><input id="setCnpj"></div><div class="field"><label>Telefone</label><input id="setPhone"></div><div class="field"><label>E-mail</label><input id="setEmail"></div><div class="field"><label>Almoxarifado / setor</label><input id="setDept" value="${esc(db.settings.dept||'Almoxarifado Aquaville')}"></div><div class="field"><label>Logo / imagem da empresa</label><input id="setImage" type="file" accept="image/*" onchange="previewFile(this,'setPreview')"><div style="margin-top:8px"><img id="setPreview" class="logo-preview" src="${esc(db.settings.image||'')}" ${db.settings.image?'':'style="display:none"'}></div></div><div class="field full"><label>Endereço</label><input id="setAddress"></div><div class="actions full"><button onclick="saveSettings()">Salvar configurações</button></div></div></div>
+<div class="card" style="margin-top:15px"><h3>Backup</h3><p class="muted">Exporte seus dados antes de trocar de aparelho ou navegador.</p><button onclick="exportBackup()">⬇ Exportar backup</button> <button class="secondary" onclick="document.getElementById('backupFile').click()">⬆ Importar backup</button><input id="backupFile" type="file" accept=".json" style="display:none" onchange="importBackup(event)"></div>
+</section>
+</main></div>
+
+<div class="modal" id="modal"><div class="modalbox" id="modalContent"></div></div>
+<div class="modal" id="importModal">
+<div class="modalbox import-modalbox" style="max-width:1200px">
+<div id="importContent"></div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="print-doc" id="printDoc"></div>
+
+<script>
+// V2.1 — Cadastro inteligente de fornecedores e vínculo fornecedor ↔ material.
+// Mantemos a mesma chave para preservar os dados existentes.
+const KEY='almoxarifado_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||{materials:[],suppliers:[],quotes:[],history:[],movements:[],settings:{},count:null};
+db.suppliers=(db.suppliers||[]).map(s=>({...s,purpose:s.purpose||'',legalName:s.legalName||'',tradeName:s.tradeName||'',documents:Array.isArray(s.documents)?s.documents:[]}));
+db.movements=db.movements||[];
+db.deliveries=db.deliveries||[];
+db.materials=(db.materials||[]).map(m=>({...m,area:m.area||'',subgroup:m.subgroup||''}));
+
+const limpezaCatalogo = [
+  ['ALCOOL 70%','Un',17],
+  ['ALCOOL GEL 5L','Un',1],
+  ['AROMATIZANTE 1L','Un',4],
+  ['BALDE DE PLASTICO','Un',3],
+  ['BOMBRIL C/8UNIDADES','Un',1],
+  ['BORRIFADOR 500ML','Un',7],
+  ['CABO DE ALUMINIO 1,40','Un',5],
+  ['CABO DE CHAPA 1,40CM','Un',1],
+  ['CABO P/ VASSOURA 1,50M','Un',29],
+  ['DESENTUPIDOR VASO SANITARIO','Un',4],
+  ['DESINFETANTE 5L','Un',0],
+  ['DETERGENTE 5L','Un',14],
+  ['ESCOVA SANITÁRIA','Un',3],
+  ['ESPONJA DE FIBRA LIMPEZA PESADA','Un',1],
+  ['ESPONJA DUPLA FACE 3M','Un',23],
+  ['ESSENCIA BOM AR LAVANDA 1L','Un',43],
+  ['FLOTADOR 5L','Un',1],
+  ['LUSTRA MOVEIS 200ML','Un',1],
+  ['PANO DE CHÃO ALGODÃO','Un',21],
+  ['PANO DE CHÃO REFORÇADO','Un',39],
+  ['PANO MICROFIBRA','Un',14],
+  ['PAPEL HIGIENICO 30M','Un',14],
+  ['PAPEL HIGIENICO ROLÃO 500M','Un',43],
+  ['PAPEL TOALHA 1000FLS','Un',85],
+  ['PAPEL TOALHA 2400FLS P/ CASINHA DE CACHORRO','Un',16],
+  ['PASTILHA ADESIVA LAVANDA PATO CX C/3','Un',12],
+  ['PEROL BRILHO INOX 500ML','Un',1],
+  ['PÁ DE PLASTICO P/ LIXO','Un',4],
+  ['REFIL BOM AR 250ML','Un',1],
+  ['RODO PLASTICO 40CM','Un',17],
+  ['SABONETE LIQUIDO ORQUIDEA 5L','Un',3],
+  ['SABÃO GEL 5L','Un',1],
+  ['SACO 15X30X0,05 PARA RAÇÃO DE PEIXE 5KG','Kg',11],
+  ['SACO BOBINA FUNDO ESTRELA 30X40 C/ 500 SACOS','Un',19],
+  ['SACO LIXO 100L C/100','Pac',4],
+  ['SACO LIXO 40L C/100','Pac',6],
+  ['SACO LIXO 60L C/100','Pac',3],
+  ['SILICONE LIQUIDO 1L','Un',1],
+  ['SUPORTE DE FIBRA','Un',4],
+  ['TELA P/ MICTORIO','Un',19],
+  ['VASSOURA TIPO NOVICA CRISTAL DIFRANCIS','Un',17],
+  ['VASSOURÃO GARI NYLON','Un',5],
+  ['VEJA ORIGINAL MULTIUSO 500ML','Un',18]
+];
+
+
+const gruposAquaville = {
+'ELÉTRICA':[['Lâmpada LED','Un','Iluminação'],['Luminária LED','Un','Iluminação'],['Tomada 10A','Un','Tomadas e interruptores'],['Tomada 20A','Un','Tomadas e interruptores'],['Interruptor simples','Un','Tomadas e interruptores'],['Soquete E27','Un','Iluminação'],['Fita isolante','Un','Fios e cabos'],['Cabo flexível 1,5mm²','M','Fios e cabos'],['Cabo flexível 2,5mm²','M','Fios e cabos'],['Disjuntor','Un','Proteção elétrica'],['Sensor de presença','Un','Automação e sensores']],
+'HIDRÁULICA':[['Fita veda-rosca','Un','Vedação'],['Cola PVC','Un','Tubos e conexões'],['Joelho PVC','Un','Tubos e conexões'],['Luva PVC','Un','Tubos e conexões'],['Tê PVC','Un','Tubos e conexões'],['Registro de gaveta','Un','Registros e válvulas'],['Registro de pressão','Un','Registros e válvulas'],['Reparo para válvula de descarga','Un','Reparos'],['Anel de vedação','Un','Vedação'],['Abraçadeira para tubo','Un','Fixação']],
+'FERRAMENTAS':[['Alicate universal','Un','Ferramentas manuais'],['Alicate de corte','Un','Ferramentas manuais'],['Chave de fenda','Un','Ferramentas manuais'],['Chave Phillips','Un','Ferramentas manuais'],['Chave inglesa','Un','Ferramentas manuais'],['Chave grifo','Un','Ferramentas manuais'],['Martelo','Un','Ferramentas manuais'],['Trena','Un','Medição'],['Nível','Un','Medição'],['Jogo de chaves Allen','Jg','Ferramentas manuais'],['Furadeira','Un','Ferramentas elétricas'],['Extensão elétrica','Un','Ferramentas elétricas']],
+'EPI':[['Luva de proteção','Par','Proteção das mãos'],['Luva nitrílica','Cx','Proteção das mãos'],['Óculos de proteção','Un','Proteção dos olhos'],['Protetor auricular','Un','Proteção auditiva'],['Bota de segurança','Par','Proteção dos pés'],['Bota de PVC','Par','Proteção dos pés'],['Capacete de segurança','Un','Proteção da cabeça'],['Colete refletivo','Un','Sinalização e alta visibilidade'],['Avental impermeável','Un','Proteção do corpo'],['Máscara PFF2','Un','Proteção respiratória']],
+'CONSTRUÇÃO':[['Cimento','Saco','Materiais básicos'],['Areia','Saco','Materiais básicos'],['Argamassa','Saco','Materiais básicos'],['Rejunte','Kg','Acabamento'],['Tijolo','Un','Alvenaria'],['Bloco de concreto','Un','Alvenaria'],['Vergalhão','Un','Estrutural'],['Parafuso','Un','Fixação'],['Bucha','Un','Fixação']],
+'PINTURA':[['Tinta acrílica','L','Tintas'],['Tinta esmalte','L','Tintas'],['Massa corrida','Kg','Preparação'],['Selador','L','Preparação'],['Rolo de pintura','Un','Aplicação'],['Pincel','Un','Aplicação'],['Bandeja para pintura','Un','Aplicação'],['Fita crepe','Un','Proteção'],['Lixa','Un','Preparação'],['Solvente','L','Diluição e limpeza']],
+'JARDINAGEM':[['Mangueira de jardim','M','Irrigação'],['Esguicho','Un','Irrigação'],['Conector de mangueira','Un','Irrigação'],['Tesoura de poda','Un','Ferramentas'],['Pá de jardinagem','Un','Ferramentas'],['Enxada','Un','Ferramentas'],['Ancinho','Un','Ferramentas'],['Saco para resíduos de jardinagem','Un','Resíduos'],['Substrato','Saco','Insumos'],['Adubo','Kg','Insumos']],
+'PISCINA':[['Cloro para piscina','Kg','Tratamento químico'],['Algicida','L','Tratamento químico'],['Clarificante','L','Tratamento químico'],['Elevador de pH','Kg','Tratamento químico'],['Redutor de pH','Kg','Tratamento químico'],['Fita teste de piscina','Un','Controle da água'],['Peneira para piscina','Un','Limpeza'],['Cabo telescópico','Un','Limpeza'],['Escova para piscina','Un','Limpeza'],['Mangueira para aspiração','M','Limpeza']],
+'SEGURANÇA':[['Lanterna','Un','Emergência'],['Pilha alcalina','Un','Energia'],['Fita zebrada','Rolo','Sinalização'],['Cone de sinalização','Un','Sinalização'],['Cavalete de sinalização','Un','Sinalização'],['Placa de sinalização','Un','Sinalização'],['Cadeado','Un','Controle de acesso']],
+'ESCRITÓRIO':[['Papel A4','Resma','Papelaria'],['Caneta esferográfica','Un','Papelaria'],['Marcador permanente','Un','Papelaria'],['Pasta catálogo','Un','Organização'],['Etiqueta adesiva','Pct','Identificação'],['Fita adesiva','Un','Papelaria'],['Grampeador','Un','Papelaria'],['Grampo para grampeador','Cx','Papelaria']],
+'MANUTENÇÃO':[['Lubrificante multiuso','Un','Lubrificação'],['Desengripante','Un','Lubrificação'],['Graxa','Kg','Lubrificação'],['Óleo lubrificante','L','Lubrificação'],['Abraçadeira nylon','Pct','Fixação'],['Arame galvanizado','Kg','Fixação'],['Parafuso sextavado','Un','Fixação'],['Porca','Un','Fixação'],['Arruela','Un','Fixação'],['Silicone','Un','Vedação']],
+'INCÊNDIO E EMERGÊNCIA':[['Lacre para extintor','Un','Extintores'],['Placa de extintor','Un','Sinalização'],['Fita de sinalização de emergência','Rolo','Sinalização'],['Luz de emergência','Un','Iluminação de emergência'],['Bateria para iluminação de emergência','Un','Iluminação de emergência'],['Capa para hidrante','Un','Hidrantes'],['Esguicho para hidrante','Un','Hidrantes']],
+'RESDUOS':[['Saco para lixo 100L','Pct','Acondicionamento'],['Saco para lixo 200L','Pct','Acondicionamento'],['Lixeira plástica','Un','Lixeiras'],['Contêiner plástico','Un','Lixeiras'],['Pá coletora','Un','Coleta'],['Vassoura para área externa','Un','Coleta']],
+'RESÍDUOS':[['Saco para lixo 100L','Pct','Acondicionamento'],['Saco para lixo 200L','Pct','Acondicionamento'],['Lixeira plástica','Un','Lixeiras'],['Contêiner plástico','Un','Lixeiras'],['Pá coletora','Un','Coleta'],['Vassoura para área externa','Un','Coleta']],
+'PEÇAS DE REPOSIÇÃO':[['Correia para bomba','Un','Bombas e motores'],['Rolamento','Un','Bombas e motores'],['Selo mecânico','Un','Bombas e motores'],['Capacitor','Un','Motores e bombas'],['Boia elétrica','Un','Bombas e reservatórios'],['Boia mecânica','Un','Bombas e reservatórios'],['Filtro de reposição','Un','Filtragem'],['O-ring','Un','Vedação']],
+'IMPERMEABILIZAÇÃO E COBERTURA':[['Manta asfáltica','M²','Impermeabilização'],['Impermeabilizante','L','Impermeabilização'],['Selante PU','Un','Vedação'],['Calha','M','Cobertura e drenagem'],['Condutor de água pluvial','M','Cobertura e drenagem'],['Silicone para vedação','Un','Vedação']],
+'COMUNICAÇÃO E CFTV':[['Cabo de rede','M','Cabeamento'],['Conector RJ45','Un','Cabeamento'],['Fonte 12V','Un','Alimentação'],['Conector BNC','Un','CFTV'],['Cabo coaxial','M','CFTV'],['Câmera de segurança','Un','CFTV'],['Interfone','Un','Controle de acesso']],
+'EQUIPAMENTOS E MÁQUINAS':[['Extensão elétrica reforçada','Un','Equipamentos elétricos'],['Lavadora de alta pressão','Un','Limpeza pesada'],['Aspirador de pó e água','Un','Limpeza pesada'],['Bomba d’água','Un','Bombas'],['Carrinho de mão','Un','Transporte'],['Escada','Un','Acesso']],
+'ÁREAS COMUNS':[['Lixeira para área comum','Un','Mobiliário e conservação'],['Tapete','Un','Conservação'],['Placa de aviso','Un','Sinalização'],['Fita antiderrapante','M','Segurança'],['Corda','M','Apoio operacional'],['Tela plástica de proteção','M','Proteção']]
+};
+function seedGruposAquaville(){
+ let n=0, ex=new Set((db.materials||[]).map(m=>String(m.name||'').trim().toUpperCase()));
+ Object.entries(gruposAquaville).forEach(([area,itens])=>itens.forEach(([name,unit,subgroup])=>{
+  const k=name.trim().toUpperCase(); if(ex.has(k)) return;
+  db.materials.push({id:crypto.randomUUID(),code:'',name,category:'',area,subgroup,unit,current:null,min:0,ideal:0,supplierId:'',location:'',notes:'ITEM EXEMPLAR — confirmar uso no Almoxarifado Aquaville antes da contagem inicial.',image:'',updated:new Date().toISOString()});
+  ex.add(k); n++;
+ }));
+ if(n) save(); return n;
+}
+
+function seedLimpezaCatalogo(){
+  let adicionados = 0;
+  const existentes = new Set((db.materials||[]).map(m => String(m.name||'').trim().toUpperCase()));
+  limpezaCatalogo.forEach(([name,unit,current])=>{
+    const chave = name.trim().toUpperCase();
+    if(existentes.has(chave)) return;
+    db.materials.push({
+      id: crypto.randomUUID(),
+      code:'',
+      name,
+      category:'',
+      area:'LIMPEZA',
+      subgroup:'',
+      unit,
+      current,
+      min:0,
+      ideal:0,
+      supplierId:'',
+      location:'',
+      notes:'Cadastro inicial da lista de materiais de LIMPEZA.',
+      image:'',
+      updated:new Date().toISOString()
+    });
+    adicionados++;
+  });
+  if(adicionados) save();
+  return adicionados;
+}
+
+const gruposAdicionados = seedGruposAquaville();
+const limpezaAdicionados = seedLimpezaCatalogo();
+
+function save(){localStorage.setItem(KEY,JSON.stringify(db));updateAll()}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function toast(t){let e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2200)}
+function nav(page){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(page).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page));updateAll()}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>nav(b.dataset.page));
+function status(m){if(m.current==null)return 'pending';if(m.current<m.min)return 'critical';if(m.current<m.ideal)return 'reposition';return 'ok'}
+function buy(m){return Math.max((+m.ideal||0)-(+m.current||0),0)}
+function statusLabel(s){return {critical:'🔴 Crítico',reposition:'🟡 Reposição',ok:'🟢 OK',pending:'⚪ Pendente'}[s]}
+function updateAll(){renderDashboard();renderMaterials();renderReplenishment();renderQuotes();renderSuppliers();renderHistory();renderMovements();loadSettings()}
+function renderDashboard(){
+let ms=db.materials, c=ms.filter(m=>status(m)==='critical').length,r=ms.filter(m=>status(m)==='reposition').length,o=ms.filter(m=>status(m)==='ok').length;
+kTotal.textContent=ms.length;kCritical.textContent=c;kReposition.textContent=r;kOk.textContent=o;
+homeList.innerHTML=ms.length?`<p><b>${c+r}</b> materiais estão abaixo do estoque ideal.</p><p>Quantidade total sugerida para compra: <b>${ms.reduce((a,m)=>a+buy(m),0)}</b> unidades.</p><p><b>${db.suppliers.length}</b> fornecedores cadastrados e <b>${ms.filter(m=>m.supplierId).length}</b> materiais já vinculados a fornecedor.</p><p><b>${db.movements.length}</b> movimentações registradas no histórico.</p>`:'<div class="empty">Cadastre seus primeiros materiais.</div>';
+}
+let materialAreaFilter='';
+function getMaterialAreas(){
+const areas=[...new Set(db.materials.map(m=>(m.area||'').trim()).filter(Boolean))];
+return areas.sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+function selectMaterialArea(area){
+materialAreaFilter=area;
+const subs=[...new Set(db.materials.filter(m=>(m.area||'')===area).map(m=>(m.subgroup||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+if(materialSubgroup){
+materialSubgroup.innerHTML='<option value="">Todos os subgrupos</option>'+subs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+materialSubgroup.value='';
+}
+renderMaterials();
+}
+function renderMaterialsAreaSelector(){
+const areas=getMaterialAreas();
+if(!materialAreaFilter || !areas.includes(materialAreaFilter)) materialAreaFilter='';
+materialAreaGrid.innerHTML=[
+`<button class="area-chip ${!materialAreaFilter?'active':''}" onclick="selectMaterialArea('')">📦 TODOS<small>${db.materials.length} materiais</small></button>`,
+...areas.map(a=>{
+const n=db.materials.filter(m=>(m.area||'')===a).length;
+return `<button class="area-chip ${materialAreaFilter===a?'active':''}" onclick="selectMaterialArea('${esc(a)}')">${esc(a)}<small>${n} materiais</small></button>`;
+})
+].join('');
+materialSelectionBadge.textContent=materialAreaFilter||'TODOS';
+}
+function renderMaterials(){
+renderMaterialsAreaSelector();
+let q=(materialSearch?.value||'').toLowerCase(),f=materialFilter?.value||'',sub=materialSubgroup?.value||'';
+let arr=db.materials.filter(m=>{
+const areaOk=!materialAreaFilter || (m.area||'')===materialAreaFilter;
+const subOk=!sub || (m.subgroup||'')===sub;
+const text=(m.name+' '+(m.code||'')+' '+(m.subgroup||'')).toLowerCase();
+return areaOk&&subOk&&text.includes(q);
+}).filter(m=>!f||status(m)===f);
+materialsBody.innerHTML=arr.length?arr.map(m=>`<tr><td>${esc(m.code)}</td><td><b>${esc(m.name)}</b><br><small class="muted">${esc(m.category||'')}</small></td><td>${esc(m.area||'—')}</td><td>${esc(m.subgroup||'—')}</td><td>${esc(m.unit)}</td><td>${m.current==null?'—':m.current}</td><td>${m.min}</td><td>${m.ideal}</td><td><b>${buy(m)}</b></td><td><span class="badge ${status(m)}">${statusLabel(status(m))}</span></td><td><button class="secondary" onclick="openMaterial('${m.id}')">Editar</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Nenhum material encontrado.</td></tr>';
+}
+let importRows=[];
+let importSourceMeta={name:'',format:'',pages:0,area:''};
+let supplierImportState={file:null,sourceMeta:{name:'',format:'',pages:0},data:null,rawText:''};
+
+function openImportMaterials(){
+  importRows=[];
+  importSourceMeta={name:'',format:'',pages:0,area:''};
+  renderImportUpload();
+  importModal.classList.add('open');
+}
+function closeImportModal(){importModal.classList.remove('open')}
+function renderImportUpload(message=''){
+  importContent.innerHTML=`<h2>Importar materiais por documento</h2>
+  <div class="import-help"><div>📄</div><div><b>Importação inteligente</b><div class="muted">Envie um PDF, DOC ou DOCX com uma lista/tabela de materiais. O sistema primeiro lê e organiza os dados; nada é cadastrado antes da sua conferência.</div></div></div>
+  <div class="import-drop" id="importDrop" onclick="document.getElementById('importFile').click()">
+    <div style="font-size:28px">⇧</div><h3 style="margin:8px 0">Selecione o documento</h3><div class="muted">Formatos: PDF, DOC e DOCX</div>
+    <input id="importFile" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="handleImportFile(this.files[0])">
+  </div>
+  ${message?`<div class="card" style="margin-top:14px;border-color:#f0c36a;background:#fffaf0">${esc(message)}</div>`:''}
+  <div class="actions"><button class="secondary" onclick="closeImportModal()">Cancelar</button></div>`;
+  const drop=document.getElementById('importDrop');
+  if(drop){
+    ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
+    ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
+    drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files?.[0];if(f)handleImportFile(f)});
+  }
+}
+function renderImportProcessing(text='Processando documento...'){
+  importContent.innerHTML=`<h2>Importar materiais por documento</h2><div class="card" style="text-align:center;padding:28px"><div style="font-size:28px">⏳</div><h3>${esc(text)}</h3><div class="muted">Aguarde. Nenhum dado será gravado antes da conferência.</div></div>`;
+}
+function normalizeImportText(v){return String(v||'').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').trim()}
+function normalizeUnit(u){
+  const x=normalizeImportText(u).toUpperCase().replace(/[.]/g,'');
+  const map={UN:'UN',UND:'UN',UNIDADE:'UN',UNIDADES:'UN',PAC:'PAC',PCT:'PCT',CAIXA:'CX',CX:'CX',KG:'KG',KILO:'KG',L:'L',LT:'L',M:'M',METRO:'M',METROS:'M',PAR:'PAR',JG:'JG',JOGO:'JG',SACO:'SACO',ROLO:'ROLO',GALAO:'GALÃO','GALÃO':'GALÃO'};
+  return map[x]||normalizeImportText(u)||'UN';
+}
+function parseQuantity(v){
+  const n=String(v||'').replace(/\./g,'').replace(',','.').match(/-?\d+(?:\.\d+)?/);
+  return n?Number(n[0]):null;
+}
+function looksLikeMeta(line){
+  const x=normalizeImportText(line).toUpperCase();
+  return !x || /^MATERIAL$/.test(x)||/^QUANTIDADE$/.test(x)||/^UNIDADE$/.test(x)||/^P[ÁA]GINA\s+\d+/.test(x)||/^MATERIAIS\s+TRANSCRITOS/.test(x)||/TOTAL\s+GERAL\s+INFORMADO/.test(x)||/\b\d+\s+ITENS?\b/.test(x);
+}
+function detectArea(lines){
+  const known=getMaterialAreas();
+  const fold=v=>normalizeImportText(v).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  for(const line of lines.slice(0,15)){
+    const x=normalizeImportText(line);
+    const up=x.toUpperCase();
+    const folded=fold(x);
+    const exact=known.find(a=>fold(a)===folded);
+    if(exact)return exact;
+    const embedded=known.find(a=>{const fa=fold(a);return folded.includes(fa) && fa.length>=4;});
+    if(embedded)return embedded;
+    if(/^[A-ZÀ-Ú][A-ZÀ-Ú\s/&-]{2,40}$/.test(up) && !/^(MATERIAL|QUANTIDADE|UNIDADE|PÁGINA|MATERIAIS|TOTAL GERAL|\d+)/.test(up)){
+      const candidate=known.find(a=>fold(a).includes(folded)||folded.includes(fold(a)));
+      if(candidate)return candidate;
+    }
+  }
+  return '';
+}
+function makeImportRow(name,qty,unit,area='',code=''){
+  return {selected:true,name:normalizeImportText(name),qty:qty==null?0:qty,unit:normalizeUnit(unit),area:area||'',subgroup:'',code:code||'',status:'new',existingId:'',issue:''};
+}
+function parseStructuredLines(lines,area=''){
+  const clean=lines.map(normalizeImportText).filter(x=>x && !looksLikeMeta(x));
+  const rows=[];
+  // Common PDF extraction: each table cell appears on its own line: MATERIAL, QUANTITY, UNIT.
+  for(let i=0;i<clean.length;){
+    if(looksLikeMeta(clean[i])){i++;continue}
+    const qty=parseQuantity(clean[i+1]);
+    const unit=clean[i+2];
+    if(qty!=null && unit && /^[A-Za-zÀ-ÿ]{1,12}[.]?$/.test(unit)){
+      rows.push(makeImportRow(clean[i],qty,unit,area)); i+=3; continue;
+    }
+    const m=clean[i].match(/^(.+?)\s+(-?\d+(?:[.,]\d+)?)\s+([A-Za-zÀ-ÿ]{1,12})$/);
+    if(m){rows.push(makeImportRow(m[1],parseQuantity(m[2]),m[3],area));i++;continue;}
+    const tab=clean[i].split(/\t+/).map(x=>x.trim()).filter(Boolean);
+    if(tab.length>=3){const q=parseQuantity(tab[1]);if(q!=null){rows.push(makeImportRow(tab[0],q,tab[2],area));i++;continue;}}
+    i++;
+  }
+  return rows;
+}
+function dedupeImportRows(rows){
+  const seen=new Map();
+  return rows.filter(r=>{const k=(r.name||'').toUpperCase().replace(/\s+/g,' ').trim();if(!k)return false;if(seen.has(k))return false;seen.set(k,true);return true});
+}
+function classifyImportRows(rows){
+  const byCode=new Map(db.materials.filter(m=>m.code).map(m=>[String(m.code).trim().toUpperCase(),m]));
+  const byName=new Map(db.materials.map(m=>[(m.name||'').toUpperCase().replace(/\s+/g,' ').trim(),m]));
+  rows.forEach(r=>{
+    const existing=(r.code&&byCode.get(r.code.toUpperCase()))||byName.get(r.name.toUpperCase().replace(/\s+/g,' ').trim());
+    if(existing){r.status='existing';r.existingId=existing.id;}
+    else r.status='new';
+  });
+}
+function loadExternalScript(src,globalName){
+  return new Promise((resolve,reject)=>{
+    if(window[globalName])return resolve(window[globalName]);
+    const existing=[...document.scripts].find(x=>x.src===src);
+    if(existing){existing.addEventListener('load',()=>resolve(window[globalName]));existing.addEventListener('error',()=>reject(new Error('Não foi possível carregar o leitor necessário.')));return;}
+    const sc=document.createElement('script');sc.src=src;sc.async=true;sc.onload=()=>window[globalName]?resolve(window[globalName]):reject(new Error('Leitor carregado, mas indisponível.'));sc.onerror=()=>reject(new Error('Não foi possível carregar o leitor necessário.'));document.head.appendChild(sc);
+  });
+}
+async function ensurePdfJs(){return loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','pdfjsLib')}
+async function ensureTesseract(){return loadExternalScript('https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js','Tesseract')}
+async function ensureMammoth(){return loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js','mammoth')}
+function openSupplierDocumentsDB(){return new Promise((resolve,reject)=>{if(!('indexedDB' in window))return reject(new Error('Armazenamento de documentos não disponível neste navegador.'));const req=indexedDB.open('almoxarifado_documentos_v1',1);req.onupgradeneeded=()=>{const dbi=req.result;if(!dbi.objectStoreNames.contains('supplierDocs'))dbi.createObjectStore('supplierDocs',{keyPath:'id'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('Não foi possível abrir o armazenamento de documentos.'));})}
+async function saveSupplierDocumentBlob(id,file){const dbi=await openSupplierDocumentsDB();return new Promise((resolve,reject)=>{const tx=dbi.transaction('supplierDocs','readwrite');tx.objectStore('supplierDocs').put({id,name:file.name,type:file.type||'application/octet-stream',size:file.size,date:new Date().toISOString(),blob:file});tx.oncomplete=()=>{dbi.close();resolve()};tx.onerror=()=>{dbi.close();reject(tx.error||new Error('Não foi possível salvar o documento.'))};})}
+async function getSupplierDocumentBlob(id){const dbi=await openSupplierDocumentsDB();return new Promise((resolve,reject)=>{const tx=dbi.transaction('supplierDocs','readonly');const req=tx.objectStore('supplierDocs').get(id);req.onsuccess=()=>{const v=req.result;dbi.close();resolve(v||null)};req.onerror=()=>{dbi.close();reject(req.error||new Error('Não foi possível abrir o documento.'))};})}
+async function deleteSupplierDocumentBlob(id){try{const dbi=await openSupplierDocumentsDB();await new Promise((resolve,reject)=>{const tx=dbi.transaction('supplierDocs','readwrite');tx.objectStore('supplierDocs').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});dbi.close()}catch(e){console.warn(e)}}
+function supplierDocMetaHtml(s){const docs=Array.isArray(s.documents)?s.documents:[];if(!docs.length)return '<div class="empty" style="padding:14px">Nenhum documento associado.</div>';return '<div>'+docs.map(d=>`<div class="card" style="padding:10px;margin-top:8px;display:flex;justify-content:space-between;gap:10px;align-items:center"><div><b>📄 ${esc(d.name)}</b><br><small>${esc(d.type||'Documento')} • ${d.size?formatFileSize(d.size):''} • ${d.date?new Date(d.date).toLocaleString('pt-BR'):''}</small></div><button class="secondary" onclick="openSupplierDocument('${s.id}','${d.id}')">Visualizar</button></div>`).join('')+'</div>'}
+function formatFileSize(n){n=Number(n)||0;if(n<1024)return n+' B';if(n<1024*1024)return (n/1024).toFixed(1)+' KB';return (n/(1024*1024)).toFixed(1)+' MB'}
+function openSupplierImport(){supplierImportState={file:null,sourceMeta:{name:'',format:'',pages:0},data:null,rawText:''};renderSupplierImportUpload();importModal.classList.add('open')}
+function renderSupplierImportUpload(message=''){importContent.innerHTML=`<h2>Importar fornecedor por documento</h2><div class="import-help"><div>🚚</div><div><b>Cadastro inteligente de fornecedor</b><div class="muted">Envie um documento que contenha os dados do fornecedor. O sistema fará a leitura, preencherá os dados encontrados e pedirá sua conferência antes de salvar.</div></div></div><div class="import-drop" id="supplierImportDrop" onclick="document.getElementById('supplierImportFile').click()"><div style="font-size:30px">📄</div><b>Clique para selecionar o documento</b><div class="muted">PDF, DOC ou DOCX</div><input id="supplierImportFile" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="handleSupplierImportFile(this.files[0])"></div>${message?`<div class="card" style="margin-top:12px;background:#fff5f5;border-color:#f0caca"><b>Não foi possível processar:</b><div class="muted" style="margin-top:5px">${esc(message)}</div></div>`:''}<div class="actions"><button class="secondary" onclick="closeImportModal()">Cancelar</button></div>`;const drop=document.getElementById('supplierImportDrop');if(drop){['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));drop.addEventListener('drop',e=>{const f=e.dataTransfer.files?.[0];if(f)handleSupplierImportFile(f)})}}
+function renderSupplierImportProcessing(text='Processando documento...'){importContent.innerHTML=`<h2>Importar fornecedor por documento</h2><div class="card" style="text-align:center;padding:28px"><div style="font-size:28px">⏳</div><h3>${esc(text)}</h3><div class="muted">Aguarde. Nenhum fornecedor será salvo antes da conferência.</div></div>`}
+function supplierNormalize(v){return normalizeImportText(v).replace(/\s+/g,' ').trim()}
+function supplierFold(v){return supplierNormalize(v).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function supplierFieldFromLines(lines,labels){const folds=labels.map(supplierFold);for(let i=0;i<lines.length;i++){const raw=supplierNormalize(lines[i]);const f=supplierFold(raw);const idx=folds.findIndex(l=>f===l||f.startsWith(l+':')||f.startsWith(l+' -'));if(idx<0)continue;let value=raw.replace(new RegExp('^'+labels[idx].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*[:\\-]?\\s*','i'),'').trim();if(value)return value;for(let j=i+1;j<Math.min(lines.length,i+3);j++){const nxt=supplierNormalize(lines[j]);if(nxt&&!/^(fornecedor|razao social|nome fantasia|cnpj|endereco|fone|telefone|whatsapp|e-?mail|contato|responsavel|cidade|estado|uf)\s*:/i.test(nxt))return nxt}}return ''}
+function extractSupplierData(lines){
+  const all=lines.map(supplierNormalize).filter(Boolean), joined=all.join('\n');
+  const data={legalName:supplierFieldFromLines(all,['RAZÃO SOCIAL','RAZAO SOCIAL']),tradeName:supplierFieldFromLines(all,['NOME FANTASIA']),name:supplierFieldFromLines(all,['FORNECEDOR']),cnpj:'',phone:'',whatsapp:'',email:'',contact:supplierFieldFromLines(all,['CONTATO','RESPONSÁVEL','RESPONSAVEL']),address:supplierFieldFromLines(all,['ENDEREÇO','ENDERECO']),cityState:''};
+  const cnpjLabel=supplierFieldFromLines(all,['CNPJ']);if(cnpjLabel){const c=cnpjLabel.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/);if(c)data.cnpj=c[0]}
+  const emailLabel=supplierFieldFromLines(all,['E-MAIL','EMAIL']);if(emailLabel){const e=emailLabel.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);if(e)data.email=e[0]}
+  const wa=all.find(x=>/^whatsapp\s*[:\-]/i.test(x));if(wa){const m=wa.match(/(?:whatsapp\s*[:\-]?\s*)?(\(?\d{2}\)?\s*\d{4,5}[\s-]?\d{4})/i);if(m)data.whatsapp=m[1].trim()}
+  const phoneLabel=all.filter(x=>/^(fone|telefone|tel\.?|celular)\s*[:\-]/i.test(x));const phones=phoneLabel.flatMap(x=>[...x.matchAll(/(?:fone|telefone|tel\.?|celular)\s*[:\-]?\s*(\(?\d{2}\)?\s*\d{4,5}[\s-]?\d{4})/ig)].map(m=>m[1]));if(phones)data.phone=phones.find(x=>x!==data.whatsapp)||phones[0]||'';
+  if(!data.name)data.name=data.tradeName||data.legalName||'';
+  const cs=supplierFieldFromLines(all,['CIDADE/ESTADO','CIDADE / ESTADO']);if(cs)data.cityState=cs;
+  return data;
+}
+function findExistingSupplier(data){const c=supplierFold(data.cnpj);const name=supplierFold(data.tradeName||data.legalName||data.name);return db.suppliers.find(s=>(c&&supplierFold(s.cnpj)===c)||(name&&[s.name,s.tradeName,s.legalName].some(v=>supplierFold(v)===name))||(data.email&&supplierFold(s.email)===supplierFold(data.email)))||null}
+function renderSupplierImportPreview(){const d=supplierImportState.data||{};const existing=findExistingSupplier(d);supplierImportState.existingId=existing?.id||'';importContent.innerHTML=`<h2>Conferir fornecedor</h2><div class="muted"><b>Documento:</b> ${esc(supplierImportState.sourceMeta.name)} ${supplierImportState.sourceMeta.pages?`• <b>Páginas:</b> ${supplierImportState.sourceMeta.pages}`:''}</div><div class="import-summary"><span class="badge">${existing?'🟡 Fornecedor possivelmente existente':'🟢 Novo fornecedor'}</span></div>${existing?`<div class="card" style="margin-bottom:14px;background:#fffaf0;border-color:#f0d59b"><b>Possível duplicidade</b><div class="muted">Fornecedor existente: ${esc(existing.name||existing.tradeName||existing.legalName)}</div><div class="muted">CNPJ: ${esc(existing.cnpj||'Não informado')}</div></div>`:''}<div class="card"><div class="formgrid"><div class="field"><label>Razão social</label><input id="siLegalName" value="${esc(d.legalName||'')}"></div><div class="field"><label>Nome fantasia</label><input id="siTradeName" value="${esc(d.tradeName||'')}"></div><div class="field"><label>CNPJ</label><input id="siCnpj" value="${esc(d.cnpj||'')}"></div><div class="field"><label>Telefone</label><input id="siPhone" value="${esc(d.phone||'')}"></div><div class="field"><label>WhatsApp</label><input id="siWhatsapp" value="${esc(d.whatsapp||'')}"></div><div class="field"><label>E-mail</label><input id="siEmail" value="${esc(d.email||'')}"></div><div class="field"><label>Responsável/Contato</label><input id="siContact" value="${esc(d.contact||'')}"></div><div class="field"><label>Cidade/Estado</label><input id="siCityState" value="${esc(d.cityState||'')}"></div><div class="field full"><label>Endereço</label><input id="siAddress" value="${esc(d.address||'')}"></div></div></div><div class="card" style="margin-top:14px;background:#f8fbff;border-color:#dce7f7"><b>Documento original</b><div class="muted" style="margin-top:5px">${esc(supplierImportState.sourceMeta.name)} • ${formatFileSize(supplierImportState.file?.size)}</div><div class="muted" style="margin-top:5px">O arquivo original será mantido associado ao fornecedor após a confirmação.</div></div><div class="actions"><button class="secondary" onclick="renderSupplierImportUpload()">← Escolher outro</button><button class="secondary" onclick="closeImportModal()">Cancelar</button><button onclick="confirmSupplierImport()">✓ Confirmar cadastro</button></div>`}
+function collectSupplierImportForm(){supplierImportState.data={...supplierImportState.data,legalName:document.getElementById('siLegalName').value.trim(),tradeName:document.getElementById('siTradeName').value.trim(),cnpj:document.getElementById('siCnpj').value.trim(),phone:document.getElementById('siPhone').value.trim(),whatsapp:document.getElementById('siWhatsapp').value.trim(),email:document.getElementById('siEmail').value.trim(),contact:document.getElementById('siContact').value.trim(),cityState:document.getElementById('siCityState').value.trim(),address:document.getElementById('siAddress').value.trim()}}
+async function handleSupplierImportFile(file){if(!file)return;const ext=(file.name.split('.').pop()||'').toLowerCase();if(!['pdf','doc','docx'].includes(ext)){renderSupplierImportUpload('Formato não suportado. Selecione PDF, DOC ou DOCX.');return}supplierImportState.file=file;supplierImportState.sourceMeta={name:file.name,format:ext.toUpperCase(),pages:0};renderSupplierImportProcessing(`Lendo ${file.name}...`);try{let lines=[];if(ext==='pdf'){const result=await extractPdfText(file);supplierImportState.sourceMeta.pages=result.pdf.numPages;lines=result.lines;if(result.weakPages>0||lines.length<5){renderSupplierImportProcessing('Texto insuficiente no PDF. Tentando leitura por OCR...');const ocr=await ocrPdf(file);lines=ocr.split(/\r?\n/);}}else if(ext==='docx'){const text=await extractDocx(file);lines=text.split(/\r?\n/)}else{throw new Error('Arquivos DOC antigos (.doc) não possuem leitura direta confiável no navegador. Converta para DOCX ou PDF e tente novamente.')}supplierImportState.rawText=lines.join('\n');supplierImportState.data=extractSupplierData(lines);if(!supplierImportState.data.name&&!supplierImportState.data.legalName&&!supplierImportState.data.tradeName&&!supplierImportState.data.cnpj)throw new Error('Não foi possível identificar dados suficientes do fornecedor no documento.');renderSupplierImportPreview()}catch(err){renderSupplierImportUpload(err?.message||'Não foi possível processar o documento.')}}
+async function confirmSupplierImport(){collectSupplierImportForm();const d=supplierImportState.data||{};const name=(d.tradeName||d.legalName||d.name||'').trim();if(!name)return toast('Informe a Razão social ou o Nome fantasia.');if(d.cnpj){const existing=db.suppliers.find(s=>supplierFold(s.cnpj)===supplierFold(d.cnpj));if(existing)return toast('Fornecedor com este CNPJ já está cadastrado. Revise o cadastro antes de continuar.')}const id=crypto.randomUUID();const displayName=d.tradeName||d.legalName||d.name;const supplier={id,name:displayName,legalName:d.legalName||'',tradeName:d.tradeName||'',cnpj:d.cnpj||'',phone:d.phone||'',whatsapp:d.whatsapp||'',email:d.email||'',contact:d.contact||'',address:d.address||'',cityState:d.cityState||'',notes:'Importado de '+supplierImportState.sourceMeta.name,purpose:'',image:'',documents:[]};if(supplierImportState.file){const docId=crypto.randomUUID();await saveSupplierDocumentBlob(docId,supplierImportState.file);supplier.documents.push({id:docId,name:supplierImportState.file.name,type:supplierImportState.file.type||supplierImportState.sourceMeta.format,size:supplierImportState.file.size,date:new Date().toISOString()})}db.suppliers.push(supplier);save();closeImportModal();nav('suppliers');toast('Fornecedor importado e documento vinculado com sucesso.')}
+async function openSupplierDocument(supplierId,docId){try{const doc=await getSupplierDocumentBlob(docId);if(!doc?.blob)throw new Error('Documento não encontrado no armazenamento.');const url=URL.createObjectURL(doc.blob);const w=window.open(url,'_blank');if(!w)toast('O navegador bloqueou a abertura do documento. Permita pop-ups para visualizar.');setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){toast(e.message||'Não foi possível abrir o documento.')}}
+
+async function extractPdfText(file){
+  await ensurePdfJs();
+  if(!window.pdfjsLib)throw new Error('Leitor de PDF não disponível.');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const data=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data}).promise;
+  const allLines=[]; let weakPages=0;
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    const items=(tc.items||[]).filter(x=>normalizeImportText(x.str));
+    if(items.length<6)weakPages++;
+    const groups=[];
+    items.forEach(it=>{const y=it.transform?.[5]??0;let g=groups.find(x=>Math.abs(x.y-y)<3);if(!g){g={y,items:[]};groups.push(g)}g.items.push(it)});
+    groups.sort((a,b)=>b.y-a.y);
+    groups.forEach(g=>g.items.sort((a,b)=>(a.transform?.[4]??0)-(b.transform?.[4]??0)));
+    allLines.push(...groups.map(g=>normalizeImportText(g.items.map(i=>i.str).join(' '))));
+  }
+  return {pdf,lines:allLines,weakPages};
+}
+async function ocrPdf(file){
+  await ensurePdfJs();
+  await ensureTesseract();
+  if(!window.Tesseract)throw new Error('OCR não disponível neste navegador.');
+  const data=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data}).promise;
+  const worker=await Tesseract.createWorker('por');
+  const pages=[];
+  try{
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);const viewport=page.getViewport({scale:1.6});
+      const canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+      await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+      const {data:res}=await worker.recognize(canvas);
+      pages.push(res.text||'');
+    }
+  }finally{await worker.terminate()}
+  return pages.join('\n');
+}
+async function extractDocx(file){
+  await ensureMammoth();
+  if(!window.mammoth)throw new Error('Leitor DOCX não disponível.');
+  const result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
+  return result.value||'';
+}
+async function handleImportFile(file){
+  if(!file)return;
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(!['pdf','doc','docx'].includes(ext)){renderImportUpload('Formato não suportado. Selecione PDF, DOC ou DOCX.');return;}
+  importSourceMeta={name:file.name,format:ext.toUpperCase(),pages:0,area:''};
+  renderImportProcessing(`Lendo ${file.name}...`);
+  try{
+    let lines=[];
+    if(ext==='pdf'){
+      const result=await extractPdfText(file);importSourceMeta.pages=result.pdf.numPages;
+      lines=result.lines;
+      let rows=parseStructuredLines(lines);
+      if(rows.length<3 && result.weakPages>0){
+        renderImportProcessing('Texto insuficiente no PDF. Tentando leitura por OCR...');
+        const ocr=await ocrPdf(file);lines=ocr.split(/\r?\n/);rows=parseStructuredLines(lines);
+      }
+      importSourceMeta.area=detectArea(lines);
+      rows.forEach(r=>r.area=importSourceMeta.area||r.area);
+      importRows=dedupeImportRows(rows);
+    }else if(ext==='docx'){
+      const text=await extractDocx(file);lines=text.split(/\r?\n/);importSourceMeta.area=detectArea(lines);
+      importRows=dedupeImportRows(parseStructuredLines(lines,importSourceMeta.area));
+    }else{
+      throw new Error('Arquivos DOC antigos (.doc) não possuem leitura direta confiável no navegador. Converta o arquivo para DOCX ou PDF e tente novamente.');
+    }
+    if(!importRows.length)throw new Error('Nenhum material estruturado foi identificado no documento.');
+    classifyImportRows(importRows);
+    renderImportPreview();
+  }catch(err){
+    renderImportUpload(err?.message||'Não foi possível processar o documento.');
+  }
+}
+function importUnitOptions(selected){
+  const units=['UN','CX','PCT','PAC','RESMA','L','KG','GALÃO','ROLO','M','PAR','JG','SACO'];
+  if(selected&&!units.includes(selected))units.push(selected);
+  return units.map(u=>`<option ${u===selected?'selected':''}>${esc(u)}</option>`).join('');
+}
+function setImportRow(i,key,value){
+  if(!importRows[i])return;
+  if(key==='qty')importRows[i][key]=parseQuantity(value)??0;else importRows[i][key]=value;
+}
+function toggleImportRow(i,checked){if(importRows[i])importRows[i].selected=checked}
+function toggleImportAll(checked){importRows.forEach(r=>r.selected=checked);renderImportPreview(false)}
+function importStats(){return {total:importRows.length,selected:importRows.filter(r=>r.selected).length,newCount:importRows.filter(r=>r.status==='new').length,existing:importRows.filter(r=>r.status==='existing').length}}
+function renderImportPreview(reclassify=true){
+  if(reclassify)classifyImportRows(importRows);
+  const st=importStats();
+  importContent.innerHTML=`<h2>Conferir importação</h2>
+  <div class="muted"><b>Documento:</b> ${esc(importSourceMeta.name)} ${importSourceMeta.pages?`• <b>Páginas:</b> ${importSourceMeta.pages}`:''}</div>
+  <div class="import-summary"><span class="badge">${st.total} identificados</span><span class="badge">${st.selected} selecionados</span><span class="badge">🟢 ${st.newCount} novos</span><span class="badge">🟡 ${st.existing} já existentes</span>${importSourceMeta.area?`<span class="badge">📦 Área: ${esc(importSourceMeta.area)}</span>`:''}</div>
+  <div class="card" style="margin-bottom:14px;background:#f8fbff;border-color:#dce7f7"><div class="formgrid"><div class="field"><label>Área padrão para itens sem área</label><select id="importDefaultArea" onchange="applyImportDefault('area',this.value)"><option value="">Não definir</option>${getMaterialAreas().map(a=>`<option value="${esc(a)}" ${a===importSourceMeta.area?'selected':''}>${esc(a)}</option>`).join('')}</select></div><div class="field"><label>Subgrupo padrão</label><select id="importDefaultSubgroup" onchange="applyImportDefault('subgroup',this.value)"><option value="">Não definir</option></select></div><div class="field" style="justify-content:flex-end"><label><input type="checkbox" id="importUseQty" checked> Usar quantidade do documento como estoque atual para materiais novos</label></div><div class="field" style="justify-content:flex-end"><label><input type="checkbox" id="importUpdateExisting"> Atualizar materiais já existentes com os dados do documento</label></div></div></div>
+  <div class="toolbar"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" ${st.selected===st.total&&st.total?'checked':''} onchange="toggleImportAll(this.checked)"> Selecionar todos</label><span class="muted">Revise os campos antes de confirmar.</span></div>
+  <div class="import-table"><table><thead><tr><th>✓</th><th>Material</th><th>Quantidade</th><th>Unidade</th><th>Área</th><th>Subgrupo</th><th>Código</th><th>Status</th></tr></thead><tbody>${importRows.map((r,i)=>`<tr class="import-row-${r.status}"><td><input type="checkbox" ${r.selected?'checked':''} onchange="toggleImportRow(${i},this.checked)"></td><td><input value="${esc(r.name)}" oninput="setImportRow(${i},'name',this.value)"></td><td style="width:120px"><input type="number" min="0" step="any" value="${r.qty}" oninput="setImportRow(${i},'qty',this.value)"></td><td style="width:120px"><select onchange="setImportRow(${i},'unit',this.value)">${importUnitOptions(r.unit)}</select></td><td style="width:180px"><input value="${esc(r.area||'')}" oninput="setImportRow(${i},'area',this.value)"></td><td style="width:180px"><input value="${esc(r.subgroup||'')}" oninput="setImportRow(${i},'subgroup',this.value)"></td><td style="width:130px"><input value="${esc(r.code||'')}" oninput="setImportRow(${i},'code',this.value)"></td><td><span class="import-status">${r.status==='existing'?'🟡 Já existe':'🟢 Novo'}</span></td></tr>`).join('')}</tbody></table></div>
+  <div class="actions"><button class="secondary" onclick="renderImportUpload()">← Escolher outro</button><button class="secondary" onclick="closeImportModal()">Cancelar</button><button onclick="confirmImportMaterials()">✓ Confirmar importação</button></div>`;
+  updateImportSubgroups();
+}
+function updateImportSubgroups(){
+  const area=document.getElementById('importDefaultArea')?.value||importSourceMeta.area||'';const sel=document.getElementById('importDefaultSubgroup');if(!sel)return;
+  const subs=[...new Set(db.materials.filter(m=>(m.area||'')===area).map(m=>(m.subgroup||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  sel.innerHTML='<option value="">Não definir</option>'+subs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+}
+function applyImportDefault(key,value){
+  importRows.forEach(r=>{if(!r[key])r[key]=value});
+  if(key==='area')updateImportSubgroups();
+  renderImportPreview(false);
+}
+function confirmImportMaterials(){
+  const selected=importRows.filter(r=>r.selected&&r.name.trim());
+  if(!selected.length)return toast('Selecione pelo menos um material.');
+  const updateExisting=!!document.getElementById('importUpdateExisting')?.checked;
+  const useQty=!!document.getElementById('importUseQty')?.checked;
+  let added=0,updated=0,skipped=0;
+  for(const r of selected){
+    const existing=(r.existingId&&db.materials.find(m=>m.id===r.existingId))||db.materials.find(m=>(m.name||'').trim().toUpperCase()===(r.name||'').trim().toUpperCase());
+    if(existing){
+      if(!updateExisting){skipped++;continue;}
+      existing.code=r.code||existing.code||'';existing.name=r.name.trim();existing.area=r.area||existing.area||'';existing.subgroup=r.subgroup||existing.subgroup||'';existing.unit=normalizeUnit(r.unit||existing.unit);if(useQty)existing.current=r.qty;existing.updated=new Date().toISOString();updated++;continue;
+    }
+    db.materials.push({id:crypto.randomUUID(),code:r.code.trim(),name:r.name.trim(),category:'',area:r.area.trim(),subgroup:r.subgroup.trim(),unit:normalizeUnit(r.unit),current:useQty?r.qty:null,min:0,ideal:0,supplierId:'',location:'',notes:'Importado de '+importSourceMeta.name,image:'',updated:new Date().toISOString()});
+    added++;
+  }
+  save();closeImportModal();nav('materials');toast(`Importação concluída: ${added} novos${updated?`, ${updated} atualizados`:''}${skipped?`, ${skipped} já existentes não alterados`:''}.`);
+}
+
+function openMaterial(id){
+let m=db.materials.find(x=>x.id===id)||{code:'',name:'',category:'',area:'',subgroup:'',unit:'UN',current:null,min:0,ideal:0,supplierId:'',location:'',notes:''};
+modalContent.innerHTML=`<h2>${id?'Editar':'Novo'} material</h2><div class="formgrid">
+<div class="field"><label>Código</label><input id="mCode" value="${esc(m.code)}"></div><div class="field"><label>Nome *</label><input id="mName" value="${esc(m.name)}"></div><div class="field"><label>Categoria</label><input id="mCat" value="${esc(m.category)}"></div>
+<div class="field"><label>Área</label><input id="mArea" value="${esc(m.area||'')}" placeholder="Ex.: Limpeza"></div>
+<div class="field"><label>Subgrupo</label><input id="mSubgroup" value="${esc(m.subgroup||'')}" placeholder="Ex.: Higiene geral"></div>
+<div class="field"><label>Unidade</label><select id="mUnit">${['UN','CX','PCT','PAC','RESMA','L','KG','GALÃO','ROLO','M','PAR','JG','SACO'].map(u=>`<option ${u===m.unit?'selected':''}>${u}</option>`).join('')}</select></div>
+<div class="field"><label>Estoque atual</label><input id="mCurrent" type="number" min="0" value="${m.current??''}" placeholder="Opcional"></div>
+<div class="field"><label>Estoque mínimo *</label><input id="mMin" type="number" min="0" value="${m.min}"></div>
+<div class="field"><label>Estoque ideal *</label><input id="mIdeal" type="number" min="0" value="${m.ideal}"></div>
+<div class="field"><label>Fornecedor</label><select id="mSupplier"><option value="">Não definido</option>${db.suppliers.map(s=>`<option value="${s.id}" ${s.id===m.supplierId?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+<div class="field"><label>Localização</label><input id="mLocation" value="${esc(m.location)}"></div><div class="field"><label>Imagem do produto</label><input id="mImage" type="file" accept="image/*" onchange="previewFile(this,'mPreview')"><div style="margin-top:8px"><img id="mPreview" class="img-preview" src="${esc(m.image||'')}" ${m.image?'':'style="display:none"'}></div></div><div class="field full"><label>Observações</label><textarea id="mNotes">${esc(m.notes)}</textarea></div></div>
+<div class="actions"><button class="secondary" onclick="closeModal()">Cancelar</button>${id?`<button class="danger" onclick="deleteMaterial('${id}')">Excluir</button>`:''}<button onclick="saveMaterial('${id||''}')">Salvar</button></div>`;
+modal.classList.add('open');
+}
+async function saveMaterial(id){
+let name=mName.value.trim(),min=+mMin.value,ideal=+mIdeal.value,current=mCurrent.value===''?null:+mCurrent.value;
+if(!name)return toast('Informe o nome do material.');if(min<0||ideal<0||current<0)return toast('Valores não podem ser negativos.');if(min>ideal)return toast('O estoque mínimo não pode ser maior que o ideal.');
+let image=id?(db.materials.find(x=>x.id===id)?.image||''):'';if(mImage.files[0])image=await fileToDataURL(mImage.files[0]);let obj={id:id||crypto.randomUUID(),code:mCode.value.trim(),name,category:mCat.value.trim(),area:mArea.value.trim(),subgroup:mSubgroup.value.trim(),unit:mUnit.value,current,min,ideal,supplierId:mSupplier.value,location:mLocation.value.trim(),notes:mNotes.value.trim(),image,updated:new Date().toISOString()};
+if(id)db.materials=db.materials.map(x=>x.id===id?obj:x);else db.materials.push(obj);closeModal();save();toast('Material salvo.');nav('materials');
+}
+function deleteMaterial(id){if(confirm('Excluir este material?')){db.materials=db.materials.filter(x=>x.id!==id);closeModal();save();toast('Material excluído.')}}
+function closeModal(){modal.classList.remove('open')}
+let countAreaFilter='';
+function startCount(){
+  db.count={started:new Date().toISOString(),items:{}};
+  db.materials.forEach(m=>db.count.items[m.id]={status:'pending',qty:null});
+  countAreaFilter='';
+  save(); nav('count'); renderCount(); toast('Nova contagem iniciada. Escolha uma área para começar.');
+}
+function getCountAreas(){
+  const areas=[...new Set(db.materials.map(m=>(m.area||'').trim()).filter(Boolean))];
+  return areas.sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+function selectCountArea(area){
+  countAreaFilter=area;
+  const subs=[...new Set(db.materials.filter(m=>(m.area||'')===area).map(m=>(m.subgroup||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  if(countSubgroup){
+    countSubgroup.innerHTML='<option value="">Todos os subgrupos</option>'+subs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    countSubgroup.value='';
+  }
+  renderCount();
+}
+function renderCountAreaSelector(){
+  const areas=getCountAreas();
+  if(!countAreaFilter || !areas.includes(countAreaFilter)) countAreaFilter='';
+  countAreaGrid.innerHTML=[
+    `<button class="area-chip ${!countAreaFilter?'active':''}" onclick="selectCountArea('')">📦 TODOS<small>${db.materials.length} materiais</small></button>`,
+    ...areas.map(a=>{
+      const n=db.materials.filter(m=>(m.area||'')===a).length;
+      return `<button class="area-chip ${countAreaFilter===a?'active':''}" onclick="selectCountArea('${esc(a)}')">${esc(a)}<small>${n} materiais</small></button>`;
+    })
+  ].join('');
+  countSelectionBadge.textContent=countAreaFilter||'TODOS';
+}
+function renderCount(){
+  renderCountAreaSelector();
+  if(!db.count){
+    countInfo.textContent='Nenhuma contagem ativa. Clique em "Nova contagem" para começar.';
+    countBody.innerHTML='<div class="card empty">Clique em "Nova contagem" para começar.</div>';
+    countBatchInfo.textContent='Nenhuma contagem ativa.';
+    return;
+  }
+  const q=(countSearch?.value||'').trim().toLowerCase();
+  const sub=countSubgroup?.value||'';
+  let arr=db.materials.filter(m=>{
+    const areaOk=!countAreaFilter || (m.area||'')===countAreaFilter;
+    const subOk=!sub || (m.subgroup||'')===sub;
+    const text=(m.name+' '+(m.code||'')+' '+(m.subgroup||'')).toLowerCase();
+    return areaOk&&subOk&&(!q||text.includes(q));
+  });
+  const items=db.count.items;
+  const counted=Object.values(items).filter(x=>x.status==='counted').length;
+  const selectedCount=arr.length;
+  countInfo.textContent=`Contagem iniciada em ${new Date(db.count.started).toLocaleString('pt-BR')} • ${counted}/${db.materials.length} materiais já registrados`;
+  countBatchInfo.innerHTML=`<b>${selectedCount}</b> materiais carregados${countAreaFilter?' em <b>'+esc(countAreaFilter)+'</b>':''}${sub?' / <b>'+esc(sub)+'</b>':''}.`;
+  countBody.innerHTML=arr.length?arr.map(m=>{
+    const x=items[m.id]||{status:'pending',qty:null};
+    const qty=x.qty;
+    const sug=qty==null?'—':Math.max((m.ideal||0)-qty,0);
+    const status=qty==null?'pending':(qty<(m.min||0)?'critical':qty<(m.ideal||0)?'reposition':'ok');
+    return `<div class="card count-card" style="margin-bottom:8px">
+      <div><b>${esc(m.name)}</b><div class="muted">${esc(m.code||'Sem código')} • ${esc(m.subgroup||'Sem subgrupo')} • Ideal: ${m.ideal||0} ${esc(m.unit||'Un')}</div></div>
+      <input type="number" min="0" step="any" value="${qty??''}" placeholder="Quantidade" onchange="setCount('${m.id}',this.value)">
+      <div><span class="badge ${status}">${qty==null?'Pendente':`Comprar: ${sug}`}</span></div>
+    </div>`;
+  }).join(''):'<div class="card empty">Nenhum material encontrado para os filtros escolhidos.</div>';
+}
+function setCount(id,val){if(!db.count)return;let n=val===''?null:+val;if(n!==null&&n<0)return toast('Quantidade inválida.');db.count.items[id]={status:n===null?'pending':'counted',qty:n};save();renderCount()}
+function finishCount(){
+if(!db.count)return toast('Nenhuma contagem ativa.');
+let vals=Object.values(db.count.items),pending=vals.filter(x=>x.status!=='counted').length;
+if(pending&&!confirm(`Ainda existem ${pending} produtos pendentes. Finalizar mesmo assim?`))return;
+let totalBuy=0,rep=0;db.materials.forEach(m=>{let x=db.count.items[m.id];if(x?.status==='counted'){m.current=x.qty;m.lastCount=new Date().toISOString();let b=buy(m);if(b>0)rep++;totalBuy+=b;}});
+db.history.unshift({date:new Date().toISOString(),counted:vals.filter(x=>x.status==='counted').length,replenishment:rep,totalBuy});
+db.count=null;save();nav('replenishment');toast('Contagem finalizada e estoque atualizado.');
+}
+function movementTypeLabel(t){return {entry:'🟢 Entrada',exit:'🔴 Saída',adjustment:'🔵 Ajuste'}[t]||t}
+
+function movementRowHtml(index,item){
+  const m=db.materials.find(x=>x.id===item.materialId);
+  const max=m?.current==null?'':m.current;
+  return `<div class="card movement-item" data-index="${index}" style="margin-top:10px;padding:13px">
+    <div class="formgrid">
+      <div class="field" style="grid-column:span 2">
+        <label>Material *</label>
+        <select class="mv-item-material" data-index="${index}" onchange="refreshMovementRows()">
+          <option value="">Selecione o material</option>
+          ${db.materials.map(x=>`<option value="${x.id}" ${x.id===item.materialId?'selected':''}>${esc(x.name)}${x.code?' — '+esc(x.code):''}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Quantidade *</label>
+        <input class="mv-item-qty" data-index="${index}" type="number" min="0" step="any" value="${item.qty??''}" placeholder="0">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="secondary" onclick="removeMovementItem(${index})">🗑 Remover item</button>
+    </div>
+  </div>`;
+}
+
+let movementItems=[];
+
+function openMovement(){
+  movementItems=[{materialId:'',qty:''}];
+  renderMovementModal();
+  modal.classList.add('open');
+}
+
+function renderMovementModal(){
+  const type=window.mvType?.value||'entry';
+  modalContent.innerHTML=`<h2>Nova movimentação</h2>
+  <div class="section-note">Adicione quantos materiais forem necessários. Todos os itens desta nota serão registrados juntos.</div>
+  <div class="formgrid" style="margin-top:12px">
+    <div class="field"><label>Tipo *</label>
+      <select id="mvType" onchange="renderMovementModalPreserve()">
+        <option value="entry" ${type==='entry'?'selected':''}>Entrada</option>
+        <option value="exit" ${type==='exit'?'selected':''}>Saída</option>
+        <option value="adjustment" ${type==='adjustment'?'selected':''}>Ajuste de estoque</option>
+      </select>
+    </div>
+    <div class="field"><label>Referência / NF / motivo</label>
+      <input id="mvReason" placeholder="Ex.: NF 12345, recebimento, consumo...">
+    </div>
+  </div>
+  <div id="movementItems"></div>
+  <div class="actions" style="justify-content:flex-start">
+    <button class="secondary" onclick="addMovementItem()">＋ Adicionar outro material</button>
+  </div>
+  ${type==='exit'?`
+  <div class="card" style="margin-top:15px;background:#f8fafc">
+    <h3 style="margin-top:0">Nota de entrega da saída</h3>
+    <div class="formgrid">
+      <div class="field"><label>Quem entregou *</label><input id="mvDeliverer" placeholder="Nome de quem entregou"></div>
+      <div class="field"><label>Quem recebeu *</label><input id="mvReceiver" placeholder="Nome de quem recebeu"></div>
+      <div class="field"><label>Local *</label><input id="mvLocation" value="Almoxarifado Aquaville"></div>
+    </div>
+    <div class="section-note">A data e a hora serão registradas automaticamente no momento da confirmação.</div>
+  </div>`:''}
+  <div class="actions">
+    <button class="secondary" onclick="closeModal()">Cancelar</button>
+    <button onclick="saveMovementBatch()">✓ ${type==='exit'?'Registrar saída e gerar nota de entrega':'Registrar movimentação'}</button>
+  </div>`;
+  document.getElementById('movementItems').innerHTML=movementItems.map((x,i)=>movementRowHtml(i,x)).join('');
+  if(window.mvReason && window.mvReason.value) document.getElementById('mvReason').value=window.mvReason.value;
+}
+
+function renderMovementModalPreserve(){
+  const oldReason=document.getElementById('mvReason')?.value||'';
+  const oldDeliverer=document.getElementById('mvDeliverer')?.value||'';
+  const oldReceiver=document.getElementById('mvReceiver')?.value||'';
+  const oldLocation=document.getElementById('mvLocation')?.value||'Almoxarifado Aquaville';
+  const type=document.getElementById('mvType').value;
+  window.mvType={value:type}; window.mvReason={value:oldReason};
+  renderMovementModal();
+  if(document.getElementById('mvReason')) document.getElementById('mvReason').value=oldReason;
+  if(document.getElementById('mvDeliverer')) document.getElementById('mvDeliverer').value=oldDeliverer;
+  if(document.getElementById('mvReceiver')) document.getElementById('mvReceiver').value=oldReceiver;
+  if(document.getElementById('mvLocation')) document.getElementById('mvLocation').value=oldLocation;
+}
+
+function syncMovementItems(){
+  document.querySelectorAll('.movement-item').forEach((row)=>{
+    const i=+row.dataset.index;
+    movementItems[i].materialId=row.querySelector('.mv-item-material')?.value||'';
+    movementItems[i].qty=row.querySelector('.mv-item-qty')?.value??'';
+  });
+}
+
+function refreshMovementRows(){syncMovementItems()}
+
+function addMovementItem(){
+  syncMovementItems();
+  movementItems.push({materialId:'',qty:''});
+  const type=document.getElementById('mvType')?.value||'entry';
+  const reason=document.getElementById('mvReason')?.value||'';
+  window.mvType={value:type}; window.mvReason={value:reason};
+  renderMovementModal();
+  document.getElementById('mvReason').value=reason;
+}
+
+function removeMovementItem(index){
+  syncMovementItems();
+  movementItems.splice(index,1);
+  if(!movementItems.length) movementItems.push({materialId:'',qty:''});
+  const type=document.getElementById('mvType')?.value||'entry';
+  const reason=document.getElementById('mvReason')?.value||'';
+  window.mvType={value:type}; window.mvReason={value:reason};
+  renderMovementModal();
+  document.getElementById('mvReason').value=reason;
+}
+
+function saveMovementBatch(){
+  syncMovementItems();
+  const type=document.getElementById('mvType').value;
+  const reason=document.getElementById('mvReason').value.trim();
+  const rows=movementItems.filter(x=>x.materialId||x.qty!=='');
+  if(!rows.length) return toast('Adicione pelo menos um material.');
+  if(rows.some(x=>!x.materialId)) return toast('Selecione o material de todos os itens.');
+  if(rows.some(x=>x.qty==='' || +x.qty<0)) return toast('Informe uma quantidade válida para todos os itens.');
+
+  const seen=new Set();
+  if(rows.some(x=>seen.has(x.materialId) || seen.add(x.materialId)===false))
+    return toast('O mesmo material não pode aparecer duas vezes na mesma movimentação.');
+
+  if(type==='exit'){
+    const deliverer=document.getElementById('mvDeliverer').value.trim();
+    const receiver=document.getElementById('mvReceiver').value.trim();
+    const location=(document.getElementById('mvLocation').value.trim()||'Almoxarifado Aquaville');
+    if(!deliverer || !receiver) return toast('Informe quem entregou e quem recebeu.');
+    if(!location) return toast('Informe o local.');
+  }
+
+  const now=new Date();
+  const batchId=crypto.randomUUID();
+  const prepared=[];
+
+  for(const row of rows){
+    const m=db.materials.find(x=>x.id===row.materialId);
+    if(!m) return toast('Material não encontrado.');
+    const qty=+row.qty;
+    if(m.current==null && type!=='adjustment')
+      return toast(`Faça a contagem inicial de "${m.name}" antes de registrar entrada ou saída.`);
+    const before=m.current==null?0:+m.current;
+    let after=before;
+    if(type==='entry') after=before+qty;
+    if(type==='exit'){
+      if(qty>before) return toast(`A saída de "${m.name}" é maior que o estoque atual (${before}).`);
+      after=before-qty;
+    }
+    if(type==='adjustment') after=qty;
+    prepared.push({m,qty,before,after});
+  }
+
+  prepared.forEach(({m,qty,before,after})=>{
+    m.current=after;
+    m.lastMovement=now.toISOString();
+    db.movements.unshift({
+      id:crypto.randomUUID(),batchId,date:now.toISOString(),type,
+      materialId:m.id,qty,before,after,reason
+    });
+  });
+
+  if(type==='exit'){
+    const number='NE-'+Date.now().toString().slice(-8);
+    const delivery={
+      id:crypto.randomUUID(),number,batchId,date:now.toISOString(),
+      deliverer:document.getElementById('mvDeliverer').value.trim(),
+      receiver:document.getElementById('mvReceiver').value.trim(),
+      location:document.getElementById('mvLocation').value.trim()||'Almoxarifado Aquaville',
+      reason,
+      items:prepared.map(({m,qty,before,after})=>({materialId:m.id,qty,before,after}))
+    };
+    db.deliveries.unshift(delivery);
+    closeModal(); save(); nav('deliveries'); toast('Saída registrada. Gerando nota de entrega...');
+    printDelivery(delivery.id);
+  }else{
+    closeModal(); save(); nav('movements'); toast(`${prepared.length} item(ns) registrados em uma única movimentação.`);
+  }
+}
+
+function renderMovements(){
+  let t=movementType?.value||'',q=(movementSearch?.value||'').toLowerCase();
+  let arr=db.movements.filter(x=>!t||x.type===t).filter(x=>{
+    let m=db.materials.find(m=>m.id===x.materialId);
+    return (m?.name+' '+(m?.code||'')).toLowerCase().includes(q)
+  });
+  movementsBody.innerHTML=arr.length?arr.map(x=>{
+    let m=db.materials.find(m=>m.id===x.materialId);
+    return `<tr><td>${new Date(x.date).toLocaleString('pt-BR')}</td><td>${movementTypeLabel(x.type)}</td><td>${esc(m?.name||'Material removido')}</td><td>${x.qty}</td><td><b>${x.after}</b></td><td>${esc(x.reason||'—')}</td></tr>`
+  }).join(''):'<tr><td colspan="6" class="empty">Nenhuma movimentação registrada.</td></tr>';
+}
+
+function renderDeliveries(){
+  const arr=db.deliveries||[];
+  deliveriesBody.innerHTML=arr.length?arr.map(d=>`
+    <tr>
+      <td><b>${esc(d.number)}</b></td>
+      <td>${new Date(d.date).toLocaleString('pt-BR')}</td>
+      <td>${d.items.length}</td>
+      <td>${esc(d.deliverer)}</td>
+      <td>${esc(d.receiver)}</td>
+      <td>${esc(d.location)}</td>
+      <td><button onclick="printDelivery('${d.id}')">🖨️ Imprimir / PDF</button></td>
+    </tr>`).join(''):'<tr><td colspan="7" class="empty">Nenhuma nota de entrega registrada.</td></tr>';
+}
+
+function printDelivery(id){
+  const d=(db.deliveries||[]).find(x=>x.id===id);
+  if(!d) return toast('Nota de entrega não encontrada.');
+  const set=db.settings||{};
+  const rows=d.items.map((i,idx)=>{
+    const m=db.materials.find(x=>x.id===i.materialId);
+    return `<tr><td>${idx+1}</td><td>${esc(m?.code||'')}</td><td>${m?.image?`<img src="${esc(m.image)}" class="quote-product-img">`:''}${esc(m?.name||'Material removido')}</td><td>${esc(m?.unit||'')}</td><td>${i.qty}</td></tr>`;
+  }).join('');
+  printDoc.innerHTML=`
+    <div class="print-head">
+      ${set.image?`<img src="${esc(set.image)}" class="logo-preview" style="width:80px;height:80px">`:''}
+      <h1>NOTA DE ENTREGA DE MATERIAL</h1>
+      <div class="print-meta">
+        <span><b>Nº:</b> ${esc(d.number)}</span>
+        <span><b>Data:</b> ${new Date(d.date).toLocaleDateString('pt-BR')}</span>
+        <span><b>Hora:</b> ${new Date(d.date).toLocaleTimeString('pt-BR')}</span>
+        <span><b>Local:</b> ${esc(d.location||'Almoxarifado Aquaville')}</span>
+        <span><b>Almoxarifado:</b> ALMOXARIFADO AQUAVILLE</span>
+        <span><b>Empresa:</b> ${esc(set.name||'')}</span>
+      </div>
+    </div>
+    <table><thead><tr><th>#</th><th>Código</th><th>Material</th><th>Un.</th><th>Quantidade</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="print-footer">
+      <p><b>Referência / Motivo:</b> ${esc(d.reason||'—')}</p>
+      <br><br>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:45px">
+        <div><p>________________________________________</p><p><b>Quem entregou:</b> ${esc(d.deliverer)}</p><p>Nome e assinatura</p></div>
+        <div><p>________________________________________</p><p><b>Quem recebeu:</b> ${esc(d.receiver)}</p><p>Nome e assinatura</p></div>
+      </div>
+      <p style="margin-top:28px"><b>Local:</b> ${esc(d.location||'Almoxarifado Aquaville')} &nbsp;&nbsp; <b>Data/Hora:</b> ${new Date(d.date).toLocaleString('pt-BR')}</p>
+    </div>`;
+  window.print();
+}
+function fillSupplierFilter(){let s=repSupplier.value;repSupplier.innerHTML='<option value="">Todos os fornecedores</option>'+db.suppliers.map(x=>`<option value="${x.id}" ${x.id===s?'selected':''}>${esc(x.name)}</option>`).join('')}
+function renderReplenishment(){
+fillSupplierFilter();let f=repSupplier?.value||'',arr=db.materials.filter(m=>buy(m)>0&&(!f||m.supplierId===f));
+repBody.innerHTML=arr.length?arr.map(m=>{let sup=db.suppliers.find(s=>s.id===m.supplierId);m.orderQty=m.orderQty??buy(m);return `<tr><td><input type="checkbox" class="repcheck" data-id="${m.id}" checked></td><td><b>${esc(m.name)}</b><br><small>${esc(m.code)}</small></td><td>${m.current??'—'}</td><td>${m.ideal}</td><td>${buy(m)}</td><td><input type="number" min="0" value="${m.orderQty}" style="width:100px;padding:8px" onchange="setOrderQty('${m.id}',this.value)"></td><td>${esc(sup?.name||'Não definido')}</td></tr>`}).join(''):'<tr><td colspan="7" class="empty">Nenhum material precisa de reposição.</td></tr>';
+}
+function setOrderQty(id,v){let m=db.materials.find(x=>x.id===id);if(m)m.orderQty=Math.max(+v||0,0);save()}
+function selectAllRep(on){document.querySelectorAll('.repcheck').forEach(x=>x.checked=on)}
+function openQuoteFromReplenishment(){
+let ids=[...document.querySelectorAll('.repcheck:checked')].map(x=>x.dataset.id);if(!ids.length)return toast('Selecione ao menos um item.');
+let grouped={};ids.forEach(id=>{let m=db.materials.find(x=>x.id===id);let sid=m.supplierId||'none';(grouped[sid]??=[]).push(m)});
+let blocks=Object.entries(grouped).map(([sid,ms])=>`<div class="card" style="margin-bottom:12px"><h3>${esc(db.suppliers.find(s=>s.id===sid)?.name||'Fornecedor não definido')}</h3><ul>${ms.map(m=>`<li>${esc(m.name)} — ${m.orderQty??buy(m)} ${esc(m.unit)}</li>`).join('')}</ul></div>`).join('');
+modalContent.innerHTML=`<h2>Gerar orçamento</h2><p class="muted">Foram encontrados ${ids.length} itens. Os produtos serão separados por fornecedor.</p>${blocks}<div class="actions"><button class="secondary" onclick="closeModal()">Cancelar</button><button onclick="generateQuotes(${JSON.stringify(ids).replace(/"/g,'&quot;')})">Gerar documentos</button></div>`;modal.classList.add('open');
+}
+function generateQuotes(ids){
+let grouped={};ids.forEach(id=>{let m=db.materials.find(x=>x.id===id),sid=m.supplierId||'none';(grouped[sid]??=[]).push(m)});
+Object.entries(grouped).forEach(([sid,ms])=>{let number='ORC-'+Date.now().toString().slice(-8);db.quotes.unshift({id:crypto.randomUUID(),number,date:new Date().toISOString(),supplierId:sid,items:ms.map(m=>({id:m.id,qty:m.orderQty??buy(m)}))})});
+closeModal();save();nav('quotes');toast('Orçamento(s) gerado(s).');
+}
+function renderQuotes(){quotesBody.innerHTML=db.quotes.length?db.quotes.map(q=>`<tr><td>${q.number}</td><td>${new Date(q.date).toLocaleDateString('pt-BR')}</td><td>${esc(db.suppliers.find(s=>s.id===q.supplierId)?.name||'Fornecedor não definido')}</td><td>${q.items.length}</td><td><button onclick="printQuote('${q.id}')">🖨️ Imprimir / PDF</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty">Nenhum orçamento gerado.</td></tr>'}
+function printQuote(id){
+let q=db.quotes.find(x=>x.id===id),s=db.suppliers.find(x=>x.id===q.supplierId),set=db.settings;
+let rows=q.items.map(i=>{let m=db.materials.find(x=>x.id===i.id);return `<tr><td>${esc(m.code)}</td><td>${m.image?`<img src="${esc(m.image)}" class="quote-product-img">`:``}${esc(m.name)}</td><td>${esc(m.unit)}</td><td>${i.qty}</td><td></td><td></td></tr>`}).join('');
+printDoc.innerHTML=`<div class="print-head">${set.image?`<img src="${esc(set.image)}" class="logo-preview" style="width:80px;height:80px">`:``}<h1>SOLICITAÇÃO DE ORÇAMENTO</h1><div class="print-meta"><span><b>Nº:</b> ${q.number}</span><span><b>Data:</b> ${new Date(q.date).toLocaleDateString('pt-BR')}</span><span><b>Empresa:</b> ${esc(set.name||'')}</span><span><b>Almoxarifado:</b> ${esc(set.dept||'Almoxarifado Aquaville')}</span><span><b>Fornecedor:</b> ${s?.image?`<img src="${esc(s.image)}" class="quote-product-img">`:``}${esc(s?.name||'')}</span><span><b>CNPJ:</b> ${esc(s?.cnpj||'')}</span></div></div><table><thead><tr><th>Código</th><th>Descrição</th><th>Un.</th><th>Quantidade</th><th>Valor unitário</th><th>Valor total</th></tr></thead><tbody>${rows}</tbody></table><div class="print-footer"><p><b>Condição de pagamento:</b> __________________________________________</p><p><b>Prazo de entrega:</b> ____________________ &nbsp; <b>Validade da proposta:</b> ____________________</p><p><b>Observações:</b> __________________________________________________________</p><br><p>Solicitante: ${esc(set.name||'')} — ${esc(set.phone||'')} — ${esc(set.email||'')}</p></div>`;
+setTimeout(()=>window.print(),100);
+}
+function getSupplierPurposes(){
+let defaults=['Elétrica','Tubulação','Limpeza','EPI','Hidráulica','Ferramentas','Construção','Escritório','Manutenção','Outros'];
+let custom=db.suppliers.map(s=>(s.purpose||'').trim()).filter(Boolean);
+return [...new Set([...defaults,...custom])].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+function renderSupplierPurposeOptions(selected=''){
+let opts=getSupplierPurposes().map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+return `<datalist id="supplierPurposeList">${opts}</datalist>`;
+}
+function getSupplierMaterials(id){return db.materials.filter(m=>m.supplierId===id)}
+function supplierProductsHtml(id){
+let ms=getSupplierMaterials(id);
+if(!ms.length)return '<div class="empty" style="padding:18px">Nenhum material vinculado ainda. Vincule este fornecedor no cadastro de um material para criar a relação automaticamente.</div>';
+return `<div class="supplier-products">${ms.map(m=>`<div class="supplier-product"><div><b>${esc(m.name)}</b><br><small>${esc(m.code||'Sem código')} • ${esc(m.category||'Sem categoria')}</small></div><span class="badge ${status(m)}">${m.current==null?'Pendente':`Estoque: ${m.current} ${esc(m.unit)}`}</span></div>`).join('')}</div>`;
+}
+function openSupplier(id){
+ let s=db.suppliers.find(x=>x.id===id)||{name:'',legalName:'',tradeName:'',cnpj:'',phone:'',whatsapp:'',email:'',address:'',contact:'',cityState:'',notes:'',purpose:'',documents:[]};
+ modalContent.innerHTML=`<h2>${id?'Editar':'Novo'} fornecedor</h2><div class="formgrid">
+ <div class="field"><label>Razão social</label><input id="sLegalName" value="${esc(s.legalName||'')}"></div>
+ <div class="field"><label>Nome fantasia / Nome *</label><input id="sTradeName" value="${esc(s.tradeName||s.name||'')}"></div>
+ <div class="field"><label>Finalidade / área de fornecimento *</label><input id="sPurpose" list="supplierPurposeList" value="${esc(s.purpose||'')}" placeholder="Ex.: Limpeza, Elétrica, EPI..."><div class="section-note">Selecione uma sugestão ou digite uma finalidade personalizada.</div>${renderSupplierPurposeOptions(s.purpose||'')}</div>
+ <div class="field"><label>CNPJ</label><input id="sCnpj" value="${esc(s.cnpj)}"></div>
+ <div class="field"><label>Telefone</label><input id="sPhone" value="${esc(s.phone)}"></div>
+ <div class="field"><label>WhatsApp</label><input id="sWhatsapp" value="${esc(s.whatsapp)}"></div>
+ <div class="field"><label>E-mail</label><input id="sEmail" value="${esc(s.email)}"></div>
+ <div class="field"><label>Responsável / Contato</label><input id="sContact" value="${esc(s.contact)}"></div>
+ <div class="field"><label>Cidade/Estado</label><input id="sCityState" value="${esc(s.cityState||'')}"></div>
+ <div class="field"><label>Logo / imagem da distribuidora</label><input id="sImage" type="file" accept="image/*" onchange="previewFile(this,'sPreview')"><div style="margin-top:8px"><img id="sPreview" class="logo-preview" src="${esc(s.image||'')}" ${s.image?'':'style="display:none"'}></div></div>
+ <div class="field full"><label>Endereço</label><input id="sAddress" value="${esc(s.address)}"></div>
+ <div class="field full"><label>Observações</label><textarea id="sNotes">${esc(s.notes)}</textarea></div>
+ ${id?`<div class="field full"><label>Documentos associados</label>${supplierDocMetaHtml(s)}</div>`:''}
+ ${id?`<div class="field full"><label>Materiais normalmente vinculados a este fornecedor</label>${supplierProductsHtml(id)}</div>`:''}
+ </div><div class="actions"><button class="secondary" onclick="closeModal()">Cancelar</button>${id?`<button class="danger" onclick="deleteSupplier('${id}')">Excluir</button>`:''}<button onclick="saveSupplier('${id||''}')">Salvar</button></div>`;modal.classList.add('open')
+}
+async function saveSupplier(id){
+ let legalName=sLegalName.value.trim(),tradeName=sTradeName.value.trim(),name=(tradeName||legalName).trim(),purpose=sPurpose.value.trim();
+ if(!name)return toast('Informe a Razão social ou o Nome fantasia.');
+ if(!purpose)return toast('Informe a finalidade do fornecedor.');
+ let current=id?db.suppliers.find(x=>x.id===id):null;let image=current?.image||'';if(sImage.files[0])image=await fileToDataURL(sImage.files[0]);
+ let o={id:id||crypto.randomUUID(),name,legalName,tradeName,cnpj:sCnpj.value.trim(),phone:sPhone.value.trim(),whatsapp:sWhatsapp.value.trim(),email:sEmail.value.trim(),contact:sContact.value.trim(),cityState:sCityState.value.trim(),address:sAddress.value.trim(),notes:sNotes.value.trim(),purpose,image,documents:Array.isArray(current?.documents)?current.documents:[]};
+ if(id)db.suppliers=db.suppliers.map(x=>x.id===id?o:x);else db.suppliers.push(o);
+ closeModal();save();toast('Fornecedor salvo. Relação com materiais atualizada.');nav('suppliers')
+}
+async function deleteSupplier(id){if(confirm('Excluir fornecedor? Os materiais vinculados ficarão sem fornecedor.')){const s=db.suppliers.find(x=>x.id===id);for(const d of (s?.documents||[]))await deleteSupplierDocumentBlob(d.id);db.suppliers=db.suppliers.filter(x=>x.id!==id);db.materials.forEach(m=>{if(m.supplierId===id)m.supplierId=''});closeModal();save();toast('Fornecedor excluído e vínculos removidos.')}}
+function renderSuppliers(){
+let q=(supplierSearch?.value||'').toLowerCase(),f=supplierPurposeFilter?.value||'';
+let arr=db.suppliers.filter(s=>(s.name+' '+(s.legalName||'')+' '+(s.tradeName||'')+' '+s.cnpj).toLowerCase().includes(q)).filter(s=>!f||(s.purpose||'')===f);
+if(supplierPurposeFilter){let current=f;supplierPurposeFilter.innerHTML='<option value="">Todas as finalidades</option>'+getSupplierPurposes().map(p=>`<option value="${esc(p)}" ${p===current?'selected':''}>${esc(p)}</option>`).join('')}
+suppliersBody.innerHTML=arr.length?arr.map(s=>{let count=getSupplierMaterials(s.id).length;return `<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.purpose||'Não definida')}</td><td>${count}</td><td>${esc(s.cnpj)}</td><td>${esc(s.phone)}</td><td>${esc(s.whatsapp)}</td><td>${esc(s.email)}</td><td><button class="secondary" onclick="openSupplier('${s.id}')">Editar</button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty">Nenhum fornecedor cadastrado.</td></tr>'
+}
+function renderHistory(){historyBody.innerHTML=db.history.length?db.history.map(h=>`<tr><td>${new Date(h.date).toLocaleString('pt-BR')}</td><td>${h.counted}</td><td>${h.replenishment}</td><td>${h.totalBuy}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Nenhuma contagem finalizada.</td></tr>'}
+function loadSettings(){let s=db.settings;setName.value=s.name||'';setLegal.value=s.legal||'';setCnpj.value=s.cnpj||'';setPhone.value=s.phone||'';setEmail.value=s.email||'';setDept.value=s.dept||'';setAddress.value=s.address||'';setImage.value='';setPreview.src=s.image||'';setPreview.style.display=s.image?'block':'none'}
+async function saveSettings(){let image=db.settings.image||'';if(setImage.files[0])image=await fileToDataURL(setImage.files[0]);db.settings={name:setName.value,legal:setLegal.value,cnpj:setCnpj.value,phone:setPhone.value,email:setEmail.value,dept:setDept.value,address:setAddress.value,image};save();toast('Configurações salvas.')}
+function exportBackup(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-almoxarifado-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.materials||!x.suppliers)throw 0;if(confirm('Importar este backup e substituir os dados atuais?')){db=x;save();toast('Backup importado.')}}catch{toast('Backup inválido.')}};r.readAsText(f)}
+function fileToDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})} function previewFile(input,id){const f=input.files[0],img=document.getElementById(id);if(!f){img.style.display='none';return}const r=new FileReader();r.onload=()=>{img.src=r.result;img.style.display='block'};r.readAsDataURL(f)} updateAll();renderCount();
+</script>
+</body>
+</html>
