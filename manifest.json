@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "Almoxarifado Inteligente",
   "short_name": "Almoxarifado",
   "description": "Controle de estoque, contagem, reposição e geração de orçamentos.",
