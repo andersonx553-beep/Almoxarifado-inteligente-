@@ -14,7 +14,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git show 0c849d5b112f277e51530b68007d9bf32fbc5791:index.html > index.html
+          curl -fsSL https://raw.githubusercontent.com/andersonx553-beep/Almoxarifado-inteligente-/0c849d5b112f277e51530b68007d9bf32fbc5791/index.html -o index.html
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
@@ -29,6 +29,7 @@ jobs:
           s=s.replace(old2,new2,1)
           p.write_text(s,encoding='utf-8')
           PY
+          test "$(wc -c < index.html)" -gt 96000
           rm .github/workflows/pwa-repair.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
