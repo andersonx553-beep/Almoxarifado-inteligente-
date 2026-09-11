@@ -1,0 +1,75 @@
+name: ALMOX LAB — integrar leitor NF no HTML
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Integrar módulo de Notas de Entrada diretamente no HTML
+        shell: python
+        run: |
+          from pathlib import Path
+
+          index = Path('index.html')
+          sw = Path('sw.js')
+          text = index.read_text(encoding='utf-8')
+          marker = '<script src="./scripts/nf-entry-intelligent.js"></script>'
+
+          if marker not in text:
+              if '</body>' not in text:
+                  raise SystemExit('index.html sem fechamento </body>; integração cancelada por segurança.')
+              text = text.replace('</body>', marker + '\n</body>', 1)
+              index.write_text(text, encoding='utf-8')
+
+          # Service Worker deixa de montar/injetar módulos da aplicação.
+          # Ele fica responsável somente por cache/PWA.
+          sw_text = """const CACHE='almoxarifado-v31';
+const ASSETS=['./','./index.html','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+
+self.addEventListener('install',event=>event.waitUntil(
+  caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())
+));
+
+self.addEventListener('activate',event=>event.waitUntil(
+  caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
+    .then(()=>self.clients.claim())
+));
+
+self.addEventListener('fetch',event=>{
+  if(event.request.method!=='GET')return;
+  event.respondWith((async()=>{
+    try{return await fetch(event.request)}
+    catch(err){return (await caches.match(event.request))||Response.error()}
+  })());
+});
+"""
+          sw.write_text(sw_text, encoding='utf-8')
+
+      - name: Commitar integração definitiva
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html sw.js
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
+          git commit -m "refactor: carregar leitor NF diretamente no app"
+          git push
+
+      - name: Remover workflow temporário
+        run: |
+          git rm -f .github/workflows/almox-direct-nf-bootstrap.yml
+          git commit -m "chore: remover bootstrap temporario"
+          git push
