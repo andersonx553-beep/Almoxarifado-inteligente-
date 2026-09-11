@@ -456,7 +456,7 @@ function extractSupplierData(lines){
     const addr=supplierExtractAddress(pre);data.address=addr.address;data.number=addr.number;
     const cu=supplierExtractCityUf(pre);data.city=cu.city;data.uf=cu.uf;data.cityState=cu.city&&cu.uf?`${cu.city} / ${cu.uf}`:'';
     data.cep=supplierExtractCep(pre);
-    if(addr.index>=0){for(let i=addr.index+1;i<Math.min(pre.length,addr.index+5);i++){let x=supplierNormalize(pre[i]);if(!x||/^(cnpj|inscri|fone|telefone|tel|cep|cidade|uf|municipio|município)\b/i.test(x))continue;if(/\b\d{5}-?\d{3}\b/.test(x)||/\s[-/]\s[A-Z]{2}\b/i.test(x))continue;x=x.replace(/\b\d{5}-?\d{3}\b/,'').trim();if(x&&x.length<=60){data.neighborhood=x;break}}}
+    if(addr.index>=0){for(let i=addr.index+1;i<Math.min(pre.length,addr.index+7);i++){let x=supplierNormalize(pre[i]);if(!x)continue;x=x.replace(/\b\d{5}-?\d{3}\b/g,'').replace(/\b(?:sa[ií]da|entrada)\s*:\s*\d+\b/ig,'').replace(/\s{2,}/g,' ').replace(/^[,;\-\s]+|[,;\-\s]+$/g,'').trim();if(!x||/^(cnpj|inscri|fone|telefone|tel|cep|cidade|uf|municipio|município|natureza|série|serie|n[ºo]|número|numero|danfe|documento auxiliar)\b/i.test(x))continue;if(/\s[-/]\s[A-Z]{2}\b/i.test(x)||/^(rua|r\.?|avenida|av\.?|travessa|tv\.?|rodovia|rod\.?|estrada|alameda|pra[çc]a)\b/i.test(x))continue;if(/\b(?:fatura|protocolo|autorização|autorizacao|controle do fisco|chave de acesso)\b/i.test(x))continue;if(/[A-Za-zÀ-ÿ]{3,}/.test(x)&&x.length<=60){data.neighborhood=x;break}}}
     const contact=pre.find(x=>/^(CONTATO|RESPONS[ÁA]VEL)\s*[:\-]/i.test(x));if(contact)data.contact=contact.replace(/^(CONTATO|RESPONS[ÁA]VEL)\s*[:\-]?\s*/i,'').trim();
     const wa=pre.find(x=>/^WHATSAPP\s*[:\-]/i.test(x));if(wa){const m=wa.match(/(\(?\d{2}\)?\s*\d{4,5}[\s-]?\d{4})/);if(m)data.whatsapp=supplierFormatPhone(m[1])}
   }else{
@@ -955,7 +955,11 @@ function openSupplier(id){
  <div class="field"><label>WhatsApp</label><input id="sWhatsapp" value="${esc(s.whatsapp)}"></div>
  <div class="field"><label>E-mail</label><input id="sEmail" value="${esc(s.email)}"></div>
  <div class="field"><label>Responsável / Contato</label><input id="sContact" value="${esc(s.contact)}"></div>
- <div class="field"><label>Cidade/Estado</label><input id="sCityState" value="${esc(s.cityState||'')}"></div>
+ <div class="field"><label>Cidade</label><input id="sCity" value="${esc(s.city||'')}"></div>
+ <div class="field"><label>UF</label><input id="sUf" value="${esc(s.uf||'')}"></div>
+ <div class="field"><label>CEP</label><input id="sCep" value="${esc(s.cep||'')}"></div>
+ <div class="field"><label>Bairro</label><input id="sNeighborhood" value="${esc(s.neighborhood||'')}"></div>
+ <div class="field"><label>Número</label><input id="sNumber" value="${esc(s.number||'')}"></div>
  <div class="field"><label>Logo / imagem da distribuidora</label><input id="sImage" type="file" accept="image/*" onchange="previewFile(this,'sPreview')"><div style="margin-top:8px"><img id="sPreview" class="logo-preview" src="${esc(s.image||'')}" ${s.image?'':'style="display:none"'}></div></div>
  <div class="field full"><label>Endereço</label><input id="sAddress" value="${esc(s.address)}"></div>
  <div class="field full"><label>Observações</label><textarea id="sNotes">${esc(s.notes)}</textarea></div>
@@ -968,7 +972,7 @@ async function saveSupplier(id){
  if(!name)return toast('Informe a Razão social ou o Nome fantasia.');
  if(!purpose)return toast('Informe a finalidade do fornecedor.');
  let current=id?db.suppliers.find(x=>x.id===id):null;let image=current?.image||'';if(sImage.files[0])image=await fileToDataURL(sImage.files[0]);
- let o={id:id||crypto.randomUUID(),name,legalName,tradeName,cnpj:sCnpj.value.trim(),phone:sPhone.value.trim(),whatsapp:sWhatsapp.value.trim(),email:sEmail.value.trim(),contact:sContact.value.trim(),cityState:sCityState.value.trim(),address:sAddress.value.trim(),notes:sNotes.value.trim(),purpose,image,documents:Array.isArray(current?.documents)?current.documents:[]};
+ let o={id:id||crypto.randomUUID(),name,legalName,tradeName,cnpj:sCnpj.value.trim(),phone:sPhone.value.trim(),whatsapp:sWhatsapp.value.trim(),email:sEmail.value.trim(),contact:sContact.value.trim(),city:sCity.value.trim(),uf:sUf.value.trim().toUpperCase(),cep:sCep.value.trim(),neighborhood:sNeighborhood.value.trim(),number:sNumber.value.trim(),cityState:sCityState.value.trim(),address:sAddress.value.trim(),notes:sNotes.value.trim(),purpose,image,documents:Array.isArray(current?.documents)?current.documents:[]};
  if(id)db.suppliers=db.suppliers.map(x=>x.id===id?o:x);else db.suppliers.push(o);
  closeModal();save();toast('Fornecedor salvo. Relação com materiais atualizada.');nav('suppliers')
 }
