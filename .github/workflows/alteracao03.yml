@@ -1,4 +1,4 @@
-# Alteracao 03 executor final v5
+# Alteracao 03 executor final v6
 name: Alteracao 03
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          required=['function supplierNfeName','siCep','siNeighborhood','siNumber','siCity','siUf']
+          required=['function extractSupplierData','siCep','siNeighborhood','siNumber','siCity','siUf']
           missing=[x for x in required if x not in s]
           print('Verificação:', 'OK' if not missing else 'FALTANDO '+repr(missing))
           if missing: raise SystemExit(1)
