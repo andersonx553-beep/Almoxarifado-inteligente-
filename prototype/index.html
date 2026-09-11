@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <title>ALMOX LAB — Prototype</title>
+  <style>
+    :root{--bg:#f5f7fb;--surface:#fff;--surface2:#eef3f9;--text:#142033;--muted:#66758a;--line:#dce4ee;--brand:#1769c2;--brand2:#0e4f97;--danger:#c53030;--warn:#b7791f;--ok:#18794e;--pending:#64748b;--shadow:0 14px 40px rgba(15,35,65,.08);--radius:18px}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:var(--bg)}
+    button,input,select{font:inherit}button{border:0;cursor:pointer}.app{min-height:100vh;display:flex}.sidebar{width:248px;background:#0b1220;color:#fff;padding:20px 14px;position:sticky;top:0;height:100vh}.brand{padding:8px 10px 22px;font-weight:900;font-size:19px}.brand span{display:block;color:#8fa2bb;font-size:11px;font-weight:600;margin-top:4px}.nav{display:grid;gap:5px}.nav button{background:transparent;color:#b9c6d8;text-align:left;padding:12px 13px;border-radius:12px;font-weight:750}.nav button:hover,.nav button.active{background:#17263c;color:#fff}.main{flex:1;max-width:1500px;width:100%;margin:auto;padding:26px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.eyebrow{font-size:12px;color:var(--brand);font-weight:900;text-transform:uppercase;letter-spacing:.08em}.title{font-size:28px;margin:4px 0}.muted{color:var(--muted)}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{background:var(--brand);color:#fff;padding:11px 15px;border-radius:12px;font-weight:800}.btn:hover{background:var(--brand2)}.btn.secondary{background:#e9eef5;color:var(--text)}.btn.danger{background:var(--danger)}
+    .view{display:none}.view.active{display:block}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}.kpi small{color:var(--muted);font-weight:750}.kpi strong{display:block;font-size:31px;margin-top:9px}.kpi.danger strong{color:var(--danger)}.kpi.warn strong{color:var(--warn)}.kpi.ok strong{color:var(--ok)}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.section-head h2{margin:0;font-size:18px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}.table{width:100%;border-collapse:collapse;background:#fff}.table th,.table td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}.table th{font-size:11px;color:var(--muted);text-transform:uppercase;background:#f8fafc}.table tr:last-child td{border-bottom:0}.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.input,.select{width:100%;border:1px solid var(--line);border-radius:11px;background:#fff;padding:11px 12px;color:var(--text)}.toolbar .input{max-width:360px}.toolbar .select{max-width:220px}.badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900}.badge.critical{background:#fee2e2;color:var(--danger)}.badge.reposition{background:#fef3c7;color:var(--warn)}.badge.ok{background:#dcfce7;color:var(--ok)}.badge.pending{background:#e2e8f0;color:var(--pending)}
+    .hero{display:grid;grid-template-columns:1.4fr .6fr;gap:14px;margin-top:14px}.hero-card{background:linear-gradient(135deg,#0b3d76,#1769c2);color:#fff;border-radius:22px;padding:23px;box-shadow:var(--shadow)}.hero-card h2{margin:0 0 7px;font-size:23px}.hero-card p{margin:0;color:#dcecff;line-height:1.5}.signal{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px}.signal strong{display:block;font-size:30px;margin-top:8px}
+    .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.flow-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.flow-card b{display:block;margin-bottom:5px}.count-list{display:grid;gap:10px}.count-row{display:grid;grid-template-columns:minmax(0,1fr) 130px 110px 110px;gap:10px;align-items:center;border:1px solid var(--line);padding:12px;border-radius:14px;background:#fff}.count-row input{font-size:18px;font-weight:800}.empty{padding:35px;text-align:center;color:var(--muted)}
+    .toast{position:fixed;right:18px;bottom:18px;background:#0b1220;color:#fff;padding:13px 16px;border-radius:12px;box-shadow:var(--shadow);display:none;z-index:20}.toast.show{display:block}.modal{position:fixed;inset:0;background:rgba(5,15,30,.52);display:none;align-items:center;justify-content:center;padding:18px;z-index:30}.modal.open{display:flex}.modal-box{width:min(620px,100%);background:#fff;border-radius:20px;padding:20px}.form{display:grid;gap:12px}.form label{font-size:12px;font-weight:800;color:var(--muted)}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:8px}
+    @media(max-width:980px){.sidebar{width:210px}.grid{grid-template-columns:repeat(2,1fr)}.hero{grid-template-columns:1fr}.flow{grid-template-columns:1fr}}
+    @media(max-width:700px){.app{display:block}.sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;height:auto;padding:6px;z-index:10}.brand{display:none}.nav{grid-template-columns:repeat(5,1fr)}.nav button{font-size:10px;text-align:center;padding:9px 3px}.main{padding:17px 13px 88px}.grid{grid-template-columns:1fr 1fr}.topbar{align-items:flex-start}.title{font-size:23px}.count-row{grid-template-columns:1fr}.toolbar .input,.toolbar .select{max-width:none}.form-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">📦 ALMOX LAB<span>Controle inteligente de almoxarifado</span></div>
+    <nav class="nav">
+      <button class="active" data-view="dashboard">⌂ Início</button>
+      <button data-view="inventory">▣ Estoque</button>
+      <button data-view="count">✓ Contagem</button>
+      <button data-view="movements">↔ Movimentos</button>
+      <button data-view="replenishment">↗ Reposição</button>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section id="dashboard" class="view active">
+      <div class="topbar"><div><div class="eyebrow">ALMOX LAB · BLOCO 1</div><h1 class="title">Visão operacional</h1><div class="muted">Protótipo funcional — dados demonstrativos separados do cadastro oficial.</div></div><div class="actions"><button class="btn" onclick="openMovement('entry')">＋ Entrada</button><button class="btn secondary" onclick="openMovement('exit')">− Saída</button></div></div>
+      <div class="grid" id="kpis"></div>
+      <div class="hero"><div class="hero-card"><h2>Operar → Analisar → Decidir</h2><p>O esqueleto começa pela operação real: estoque, movimentação, contagem e reposição. Cada ação atualiza o estado e o histórico local.</p></div><div class="signal"><div class="muted">Atenção imediata</div><strong id="attention">0</strong><div class="muted">materiais críticos ou abaixo do ideal</div></div></div>
+      <div class="flow"><div class="flow-card"><b>1 · Operar</b><span class="muted">Registrar entradas, saídas e contagens.</span></div><div class="flow-card"><b>2 · Analisar</b><span class="muted">Identificar criticidade e divergências.</span></div><div class="flow-card"><b>3 · Decidir</b><span class="muted">Priorizar reposições com justificativa.</span></div></div>
+    </section>
+
+    <section id="inventory" class="view">
+      <div class="topbar"><div><div class="eyebrow">Domínio · Estoque</div><h1 class="title">Materiais</h1><div class="muted">Área → Subgrupo → Material · pendente não significa estoque zero.</div></div><button class="btn" onclick="addDemoMaterial()">＋ Material demonstrativo</button></div>
+      <div class="toolbar"><input class="input" id="search" placeholder="Pesquisar material ou código..." oninput="renderInventory()"><select class="select" id="filter" onchange="renderInventory()"><option value="">Todos os status</option><option value="critical">Críticos</option><option value="reposition">Reposição</option><option value="ok">OK</option><option value="pending">Pendente de contagem</option></select></div>
+      <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Código</th><th>Material</th><th>Área</th><th>Subgrupo</th><th>Atual</th><th>Mín.</th><th>Ideal</th><th>Comprar</th><th>Status</th></tr></thead><tbody id="inventoryBody"></tbody></table></div></div>
+    </section>
+
+    <section id="count" class="view">
+      <div class="topbar"><div><div class="eyebrow">Operação · Contagem</div><h1 class="title">Contagem física</h1><div class="muted">A quantidade física é comparada com o estoque do sistema antes do fechamento.</div></div><button class="btn" onclick="finishCount()">✓ Finalizar contagem</button></div>
+      <div class="card"><div class="section-head"><h2>Área demonstrativa</h2><span class="badge pending">Em andamento</span></div><div class="count-list" id="countList"></div></div>
+    </section>
+
+    <section id="movements" class="view">
+      <div class="topbar"><div><div class="eyebrow">Operação · Histórico</div><h1 class="title">Movimentações</h1><div class="muted">Toda entrada/saída altera o estoque e gera registro.</div></div><div class="actions"><button class="btn" onclick="openMovement('entry')">＋ Entrada</button><button class="btn danger" onclick="openMovement('exit')">− Saída</button></div></div>
+      <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Data</th><th>Tipo</th><th>Material</th><th>Qtd.</th><th>Antes</th><th>Depois</th></tr></thead><tbody id="movementBody"></tbody></table></div></div>
+    </section>
+
+    <section id="replenishment" class="view">
+      <div class="topbar"><div><div class="eyebrow">Decisão · Reposição</div><h1 class="title">Fila de reposição</h1><div class="muted">A recomendação é calculada a partir do estoque atual e do estoque ideal.</div></div></div>
+      <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Prioridade</th><th>Material</th><th>Atual</th><th>Ideal</th><th>Comprar</th><th>Motivo</th></tr></thead><tbody id="replenishmentBody"></tbody></table></div></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="movementModal"><div class="modal-box"><div class="section-head"><h2 id="movementTitle">Nova movimentação</h2><button class="btn secondary" onclick="closeMovement()">Fechar</button></div><div class="form"><div><label>Material</label><select class="select" id="movementMaterial"></select></div><div class="form-row"><div><label>Quantidade</label><input class="input" id="movementQty" type="number" min="1" value="1"></div><div><label>Observação</label><input class="input" id="movementNote" placeholder="Opcional"></div></div><div class="form-actions"><button class="btn secondary" onclick="closeMovement()">Cancelar</button><button class="btn" id="movementConfirm">Confirmar</button></div></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE='almox-lab-prototype-v1';
+const initial={
+  materials:[
+    {id:'MAT-001',name:'Papel A4',area:'Administrativo',group:'Papelaria',unit:'pct',current:8,min:10,ideal:30,counted:true},
+    {id:'MAT-002',name:'Água sanitária 5 L',area:'Limpeza',group:'Higiene',unit:'un',current:18,min:10,ideal:25,counted:true},
+    {id:'MAT-003',name:'Saco para lixo 100 L',area:'Limpeza',group:'Descartáveis',unit:'pct',current:0,min:8,ideal:20,counted:true},
+    {id:'MAT-004',name:'Caneta esferográfica azul',area:'Administrativo',group:'Papelaria',unit:'cx',current:null,min:3,ideal:10,counted:false}
+  ],
+  movements:[
+    {date:'2026-09-11 08:40',type:'Saída',material:'Papel A4',qty:2,before:10,after:8},
+    {date:'2026-09-10 16:10',type:'Entrada',material:'Água sanitária 5 L',qty:10,before:8,after:18}
+  ]
+};
+let state=load(); let movementType='entry';
+function load(){try{return JSON.parse(localStorage.getItem(STORAGE))||structuredClone(initial)}catch{return structuredClone(initial)}}
+function save(){localStorage.setItem(STORAGE,JSON.stringify(state))}
+function status(m){if(!m.counted||m.current===null)return ['pending','Pendente'];if(m.current<=m.min)return ['critical','Crítico'];if(m.current<m.ideal)return ['reposition','Reposição'];return ['ok','OK']}
+function buyQty(m){return m.current===null?0:Math.max(0,m.ideal-m.current)}
+function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function render(){renderKpis();renderInventory();renderCount();renderMovements();renderReplenishment()}
+function renderKpis(){const ms=state.materials;const counted=ms.filter(m=>m.counted&&m.current!==null);const critical=counted.filter(m=>status(m)[0]==='critical').length;const rep=counted.filter(m=>status(m)[0]==='reposition').length;const ok=counted.filter(m=>status(m)[0]==='ok').length;document.getElementById('kpis').innerHTML=`<div class="card kpi"><small>Total de materiais</small><strong>${ms.length}</strong></div><div class="card kpi danger"><small>Críticos</small><strong>${critical}</strong></div><div class="card kpi warn"><small>Em reposição</small><strong>${rep}</strong></div><div class="card kpi ok"><small>Estoque OK</small><strong>${ok}</strong></div>`;document.getElementById('attention').textContent=critical+rep}
+function renderInventory(){const q=(document.getElementById('search')?.value||'').toLowerCase();const f=document.getElementById('filter')?.value||'';const rows=state.materials.filter(m=>(!q||`${m.id} ${m.name}`.toLowerCase().includes(q))).filter(m=>!f||status(m)[0]===f);document.getElementById('inventoryBody').innerHTML=rows.length?rows.map(m=>{const [cls,label]=status(m);return `<tr><td>${esc(m.id)}</td><td><b>${esc(m.name)}</b><div class="muted">${esc(m.unit)}</div></td><td>${esc(m.area)}</td><td>${esc(m.group)}</td><td>${m.current===null?'—':m.current}</td><td>${m.min}</td><td>${m.ideal}</td><td>${buyQty(m)||'—'}</td><td><span class="badge ${cls}">${label}</span></td></tr>`}).join(''):`<tr><td colspan="9" class="empty">Nenhum material encontrado.</td></tr>`}
+function renderCount(){document.getElementById('countList').innerHTML=state.materials.map(m=>`<div class="count-row"><div><b>${esc(m.name)}</b><div class="muted">${esc(m.area)} · Sistema: ${m.current===null?'pendente':m.current}</div></div><input class="input count-input" data-id="${esc(m.id)}" type="number" min="0" placeholder="Quantidade física"><span class="muted" id="diff-${esc(m.id)}">—</span><span class="badge pending">Não finalizado</span></div>`).join('');document.querySelectorAll('.count-input').forEach(i=>i.addEventListener('input',()=>{const m=state.materials.find(x=>x.id===i.dataset.id);const diff=m.current===null?'novo':Number(i.value)-m.current;document.getElementById('diff-'+m.id).textContent=i.value===''?'—':`Dif.: ${diff}`;}))}
+function renderMovements(){document.getElementById('movementBody').innerHTML=state.movements.length?state.movements.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><span class="badge ${x.type==='Entrada'?'ok':'critical'}">${esc(x.type)}</span></td><td>${esc(x.material)}</td><td>${x.qty}</td><td>${x.before}</td><td><b>${x.after}</b></td></tr>`).join(''):`<tr><td colspan="6" class="empty">Nenhuma movimentação.</td></tr>`}
+function renderReplenishment(){const rows=state.materials.filter(m=>m.counted&&m.current!==null&&buyQty(m)>0).sort((a,b)=>buyQty(b)-buyQty(a));document.getElementById('replenishmentBody').innerHTML=rows.length?rows.map(m=>{const critical=m.current<=m.min;return `<tr><td><span class="badge ${critical?'critical':'reposition'}">${critical?'Alta':'Média'}</span></td><td><b>${esc(m.name)}</b></td><td>${m.current}</td><td>${m.ideal}</td><td><b>${buyQty(m)}</b></td><td>${critical?'Estoque abaixo do mínimo':'Abaixo do estoque ideal'}</td></tr>`}).join(''):`<tr><td colspan="6" class="empty">Nenhuma reposição necessária.</td></tr>`}
+function navigate(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));render()}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.view)));
+function openMovement(type){movementType=type;document.getElementById('movementTitle').textContent=type==='entry'?'Registrar entrada':'Registrar saída';const sel=document.getElementById('movementMaterial');sel.innerHTML=state.materials.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');document.getElementById('movementQty').value=1;document.getElementById('movementNote').value='';document.getElementById('movementModal').classList.add('open')}
+function closeMovement(){document.getElementById('movementModal').classList.remove('open')}
+document.getElementById('movementConfirm').addEventListener('click',()=>{const id=document.getElementById('movementMaterial').value;const qty=Number(document.getElementById('movementQty').value);const m=state.materials.find(x=>x.id===id);if(!m||!Number.isInteger(qty)||qty<=0)return toast('Informe uma quantidade válida.');if(m.current===null)return toast('Faça a primeira contagem antes de movimentar este material.');const before=m.current;const after=movementType==='entry'?before+qty:before-qty;if(after<0)return toast('Saída bloqueada: estoque insuficiente.');m.current=after;m.counted=true;state.movements.push({date:new Date().toLocaleString('pt-BR',{hour12:false}).slice(0,16),type:movementType==='entry'?'Entrada':'Saída',material:m.name,qty,before,after});save();closeMovement();render();toast('Movimentação registrada e estoque atualizado.')});
+function finishCount(){const inputs=[...document.querySelectorAll('.count-input')].filter(i=>i.value!=='');if(!inputs.length)return toast('Informe ao menos uma quantidade física.');let divergences=0;inputs.forEach(i=>{const m=state.materials.find(x=>x.id===i.dataset.id);const physical=Number(i.value);if(m.current!==null&&physical!==m.current)divergences++;m.current=physical;m.counted=true});save();render();toast(`Contagem finalizada. ${divergences} divergência(s) identificada(s).`)}
+function addDemoMaterial(){const n=state.materials.length+1;state.materials.push({id:`MAT-${String(n).padStart(3,'0')}`,name:`Material demonstrativo ${n}`,area:'Administrativo',group:'Papelaria',unit:'un',current:null,min:2,ideal:8,counted:false});save();render();toast('Material criado como pendente de contagem.')}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>el.classList.remove('show'),2800)}
+render();
+</script>
+</body>
+</html>
