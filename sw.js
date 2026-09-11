@@ -1,5 +1,5 @@
-const CACHE='almoxarifado-v20';
-const ASSETS=['./','./index.html','./manifest.json','./icons/icon-192.png','./icons/icon-512.png','./scripts/supplier-document-reader.js','./scripts/supplier-document-reader-fix.js','./scripts/supplier-document-reader-autosave.js','./scripts/supplier-document-reader-ie.js','./scripts/supplier-manual-fix.js','./scripts/supplier-reader-final-correction.js','./scripts/nf-stock-entry-reader.js','./scripts/nf-stock-entry-reader-fix.js','./scripts/nf-smart-entry.js','./scripts/pdfjs-worker-version-fix.js'];
+const CACHE='almoxarifado-v21';
+const ASSETS=['./','./index.html','./manifest.json','./icons/icon-192.png','./icons/icon-512.png','./scripts/supplier-document-reader.js','./scripts/supplier-document-reader-fix.js','./scripts/supplier-document-reader-autosave.js','./scripts/supplier-document-reader-ie.js','./scripts/supplier-manual-fix.js','./scripts/supplier-reader-final-correction.js','./scripts/nf-stock-entry-reader.js','./scripts/nf-stock-entry-reader-fix.js','./scripts/nf-smart-entry.js','./scripts/nf-history-panel.js','./scripts/pdfjs-worker-version-fix.js'];
 const READER='scripts/supplier-document-reader.js';
 const FIX='scripts/supplier-document-reader-fix.js';
 const AUTOSAVE='scripts/supplier-document-reader-autosave.js';
