@@ -1,7 +1,6 @@
 /* ALMOX LAB — correção do cadastro manual de fornecedores.
  * Remove a dependência rígida da finalidade e corrige a compatibilidade cidade/UF.
- * Não altera a estrutura do banco nem substitui o saveSupplier original: apenas normaliza
- * os campos antes de entregar o fluxo ao cadastro existente.
+ * Também impede que o fluxo do leitor transforme "finalidade não informada" em bloqueio.
  */
 (() => {
   'use strict';
@@ -27,7 +26,10 @@
   function normalizePurpose() {
     const el = document.getElementById('sPurpose');
     if (!el) return;
-    if (!el.value.trim()) el.value = PURPOSE_DEFAULT;
+    const value = el.value.trim();
+    if (!value || /^importação de documento\s*[—-]\s*finalidade não informada$/i.test(value)) {
+      el.value = PURPOSE_DEFAULT;
+    }
     const label = el.closest('.field')?.querySelector('label');
     if (label) label.textContent = 'Finalidade / área de fornecimento';
     el.placeholder = 'Ex.: Limpeza, Elétrica, EPI... (opcional)';
