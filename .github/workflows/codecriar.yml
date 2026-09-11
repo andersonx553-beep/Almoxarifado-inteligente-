@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  prototype-smoke:
+  validation:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,5 +15,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate prototype
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build V2
+        run: npm run build
+      - name: Validate legacy-compatible prototype contracts
         run: node tests/prototype-smoke.mjs
