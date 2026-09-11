@@ -1,11 +1,11 @@
 /* ALMOX LAB — Leitor inteligente de fornecedor (UI oficial + extração robusta)
  * Mantém o cadastro legado como camada de persistência, mas não expõe o modal legado.
+ * Alteração: identificação do FORNECEDOR por contexto semântico e endereço completo.
  */
 (() => {
   'use strict';
 
   const $ = (s, r = document) => r.querySelector(s);
-  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const clean = v => String(v ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
   const digits = v => String(v ?? '').replace(/\D/g, '');
 
@@ -81,56 +81,103 @@
     }
   }
 
+  const GENERIC_NAME_WORDS = /^(DATA|RECEBIMENTO|IDENTIFICA[CÇ][ÃA]O|ASSINATURA|DOCUMENTO|DANFE|NOTA|FISCAL|PRODUTOS|SERVI[CÇ]OS|DESCRI[CÇ][ÃA]O|QUANTIDADE|VALOR|TOTAL|PAGAMENTO|VENCIMENTO|EMISS[AÃ]O|NATUREZA|OPERA[CÇ][ÃA]O|DESTINAT[AÁ]RIO|REMETENTE|EMITENTE|ENDERE[CÇ]O|CNPJ|CPF|CEP|FONE|TELEFONE|CHAVE|S[ÉE]RIE|N[ÚU]MERO|PEDIDO|C[ÓO]DIGO|INSCRI[CÇ][ÃA]O|ESTADUAL|RAZ[AÃ]O|SOCIAL)\b/i;
+  const LEGAL_SUFFIX = /\b(?:LTDA\.?|LTD\.?|EIRELI|MEI|ME|EPP|S\.?\s*A\.?)\s*$/i;
+
   function normalizeSupplierName(value) {
     let s = clean(value);
     s = s.replace(/^[^A-Za-zÀ-ÿ0-9]+/, '');
     s = s.replace(/^(?:RECEBEMOS\s+DE|RECEBIDO\s+DE|EMITENTE|FORNECEDOR|DESTINAT[ÁA]RIO|REMETENTE)\s*/i, '');
-    s = s.replace(/^[0-9Il|]+(?=[A-ZÀ-Ý])/, '');
+    s = s.replace(/^[0-9Il|]+(?=[A-ZÀ-Ý])/i, '');
     s = s.replace(/\s+(?:OS\s+PRODUTOS(?:\/SERVI[ÇC]OS)?|OS\s+PRODUTOS|PRODUTOS(?:\/SERVI[ÇC]OS)?)\b.*$/i, '');
-    s = s.replace(/\b(?:LTDA\.?|LTD\.?|EIRELI|MEI|ME|EPP|S\.?\s*A\.?)\s*$/i, '');
+    s = s.replace(/\b(?:CNPJ|IE|INSCRI[ÇC][ÃA]O\s+ESTADUAL)\b.*$/i, '');
+    s = s.replace(LEGAL_SUFFIX, '');
     s = s.replace(/[\s,.;:/\-]+$/, '').trim();
     return s;
   }
 
+  function nameScore(value, source = '', index = 999) {
+    const raw = clean(value);
+    const n = normalizeSupplierName(raw);
+    if (!n || n.length < 3 || n.length > 100) return -999;
+    if (!/[A-Za-zÀ-ÿ]/.test(n) || /^\d/.test(n)) return -999;
+    if (GENERIC_NAME_WORDS.test(n)) return -999;
+    if (/^\d{1,2}[\s\/-]/.test(n) || /\d{2}\/\d{2}\/\d{2,4}/.test(n)) return -999;
+    if (/^(?:R\.?|RUA|AV\.?|AVENIDA|ROD\.?|RODOVIA|AL\.?|ALAMEDA|TV\.?|TRAVESSA|ESTRADA|PRA[CÇ]A)\b/i.test(n)) return -999;
+    if (/^(?:OS\s+PRODUTOS|PRODUTOS|SERVI[CÇ]OS)\b/i.test(n)) return -999;
+
+    let score = 0;
+    const u = n.toUpperCase();
+    const src = String(source || '').toUpperCase();
+    if (/RECEBEMOS\s+DE|RECEBIDO\s+DE/.test(src)) score += 70;
+    if (/EMITENTE\s*[:\-]?/.test(src)) score += 60;
+    if (/FORNECEDOR\s*[:\-]?/.test(src)) score += 80;
+    if (LEGAL_SUFFIX.test(raw)) score += 45;
+    if (/SUPERMERCADO|COMERCIAL|DISTRIBUIDORA|DISTRIBUIDOR|ATACADO|VAREJO|MERCADINHO|MERCADO|IND[ÚU]STRIA|INDUSTRIAL|CONSTRU[CÇ][AÃ]O|MATERIAL|SERVI[CÇ]OS/.test(u)) score += 20;
+    if (/[A-ZÀ-Ý]/.test(raw)) score += 5;
+    if (index < 8) score += 3;
+    if (raw.length > 70) score -= 20;
+    if (/\b(DATA|RECEBIMENTO|IDENTIFICA[CÇ][ÃA]O|ASSINATURA|P[ÁA]GINA|FRETE|VALOR|TOTAL|QUANTIDADE)\b/i.test(raw)) score -= 100;
+    return score;
+  }
+
   function extractName(text, lines, cnpj) {
     const candidates = [];
+    const full = String(text || '');
+
     const contextPatterns = [
-      /RECEBEMOS\s+DE\s+(?:\d+\s*)?(.+?)(?=\s+OS\s+PRODUTOS(?:\/SERVI[ÇC]OS)?\b|\s+CNPJ\b|$)/i,
-      /EMITENTE\s*[:\-]?\s*(.+?)(?=\s+CNPJ\b|\s+ENDERE[CÇ]O\b|$)/i,
-      /FORNECEDOR\s*[:\-]?\s*(.+?)(?=\s+CNPJ\b|\s+ENDERE[CÇ]O\b|$)/i
+      /RECEBEMOS\s+DE\s+(?:\d+\s*)?(.+?)(?=\s+OS\s+PRODUTOS(?:\/SERVI[ÇC]OS)?\b|\s+CNPJ\b|\s+N[ÚU]MERO\b|$)/i,
+      /RECEBIDO\s+DE\s+(?:\d+\s*)?(.+?)(?=\s+OS\s+PRODUTOS(?:\/SERVI[ÇC]OS)?\b|\s+CNPJ\b|$)/i,
+      /(?:EMITENTE|FORNECEDOR)\s*[:\-]?\s*(.+?)(?=\s+CNPJ\b|\s+ENDERE[CÇ]O\b|\s+CEP\b|$)/i
     ];
     for (const re of contextPatterns) {
-      const m = String(text || '').match(re);
-      if (m?.[1]) candidates.push(m[1]);
+      const m = full.match(re);
+      if (m?.[1]) candidates.push({ value: m[1], source: m[0], index: 0 });
     }
 
     if (cnpj) {
       const c = digits(cnpj);
       const idx = lines.findIndex(l => digits(l).includes(c));
-      if (idx >= 0) candidates.push(...lines.slice(Math.max(0, idx - 8), idx));
+      if (idx >= 0) {
+        for (let i = Math.max(0, idx - 10); i < idx; i++) {
+          candidates.push({ value: lines[i], source: lines[i], index: i });
+        }
+      }
     }
-    candidates.push(...lines.slice(0, 20));
 
-    const bad = /^(CNPJ|CPF|INSCRI|IE\b|DANFE|DOCUMENTO|NOTA|ENDERE[CÇ]O|CEP|FONE|TELEFONE|TEL|EMAIL|E-MAIL|CHAVE|EMITENTE|DESTINAT|REMETENTE|NATUREZA|S[ÉE]RIE|N[ÚU]MERO)\b/i;
-    for (const candidate of candidates) {
-      const n = normalizeSupplierName(candidate);
-      if (!n || bad.test(n) || /^\d/.test(n)) continue;
-      if (!/[A-Za-zÀ-ÿ]/.test(n) || digits(n).length > 10) continue;
-      if (n.length >= 2 && n.length <= 120) return n;
+    for (let i = 0; i < Math.min(lines.length, 30); i++) {
+      candidates.push({ value: lines[i], source: lines[i], index: i });
     }
-    return '';
+
+    const scored = candidates
+      .map(c => ({ ...c, normalized: normalizeSupplierName(c.value), score: nameScore(c.value, c.source, c.index) }))
+      .filter(c => c.score > -999 && c.normalized)
+      .sort((a, b) => b.score - a.score || a.normalized.length - b.normalized.length);
+
+    return scored[0]?.normalized || '';
   }
 
   function extractAddress(text) {
-    const m = String(text || '').match(/(?:RUA|R\.?|AVENIDA|AV\.?|RODOVIA|ROD\.?|ALAMEDA|TRAVESSA|TV\.?|ESTRADA|PRA[CÇ]A)\s+[^\n]{2,120}/i);
-    if (!m) return '';
-    let a = clean(m[0]);
-    const n = a.match(/(?:,|\s)N?[º°]?\s*(\d{1,6})(?=\s|,|$)/i);
-    if (n) {
-      a = a.replace(n[0], '').replace(/,\s*$/, '').trim();
-      a = `${a}, ${n[1]}`;
+    const full = String(text || '').replace(/\u00a0/g, ' ');
+    const patterns = [
+      /(?:ENDERE[CÇ]O|ENDERECO)\s*[:\-]?\s*((?:RUA|R\.?|AVENIDA|AV\.?|RODOVIA|ROD\.?|ALAMEDA|AL\.?|TRAVESSA|TV\.?|ESTRADA|PRA[CÇ]A)\s+[^\n]{2,160})/i,
+      /((?:RUA|R\.?|AVENIDA|AV\.?|RODOVIA|ROD\.?|ALAMEDA|AL\.?|TRAVESSA|TV\.?|ESTRADA|PRA[CÇ]A)\s+[^\n]{2,160})/i
+    ];
+
+    for (const re of patterns) {
+      const m = full.match(re);
+      if (!m?.[1]) continue;
+      let a = clean(m[1]);
+      a = a.split(/\s+(?:BAIRRO|CEP|CNPJ|FONE|TELEFONE|TEL\.?|E-?MAIL|MUNIC[IÍ]PIO|CIDADE|UF)\s*[:\-]?/i)[0];
+      const n = a.match(/(?:,|\s)N?[º°]?\s*(\d{1,6})(?=\s|,|$)/i);
+      if (n) {
+        a = a.replace(n[0], '').replace(/,\s*$/, '').trim();
+        a = `${a}, ${n[1]}`;
+      }
+      if (/,\s*\d{1,6}\b/.test(a)) return clean(a);
     }
-    return clean(a);
+
+    return '';
   }
 
   function extract(raw) {
@@ -157,7 +204,7 @@
   function renderResult(data) {
     const box = $('#almoxReaderResult');
     if (!box) return;
-    const labels = { razaoSocial: 'Razão social', cnpj: 'CNPJ', cep: 'CEP', endereco: 'Endereço + número', telefone: 'Telefone', email: 'E-mail' };
+    const labels = { razaoSocial: 'Fornecedor', cnpj: 'CNPJ', cep: 'CEP', endereco: 'Endereço completo + número', telefone: 'Telefone', email: 'E-mail' };
     box.innerHTML = Object.entries(data).filter(([, v]) => v).map(([k, v]) =>
       `<div class="alr-row"><span>${labels[k]}</span><strong>${clean(v)}</strong></div>`
     ).join('') || '<div class="alr-empty">Nenhum dado cadastral confiável foi identificado.</div>';
@@ -199,10 +246,10 @@
         </div>
         <div class="alr-official-source"><span class="alr-source-chip">📄 ${clean(sourceName || 'Documento')}</span><span class="alr-source-chip">Leitura concluída</span></div>
         <div class="alr-official-grid">
-          <div class="alr-official-field full"><label>Razão social</label><input id="alrLegal" value="${escapeAttr(data.razaoSocial)}" autocomplete="organization"></div>
+          <div class="alr-official-field full"><label>Fornecedor</label><input id="alrLegal" value="${escapeAttr(data.razaoSocial)}" autocomplete="organization"></div>
           <div class="alr-official-field"><label>CNPJ</label><input id="alrCnpj" value="${escapeAttr(data.cnpj)}" inputmode="numeric"></div>
           <div class="alr-official-field"><label>CEP</label><input id="alrCep" value="${escapeAttr(data.cep)}" inputmode="numeric"></div>
-          <div class="alr-official-field full"><label>Endereço + número</label><input id="alrAddress" value="${escapeAttr(data.endereco)}" autocomplete="street-address"></div>
+          <div class="alr-official-field full"><label>Endereço completo + número</label><input id="alrAddress" value="${escapeAttr(data.endereco)}" autocomplete="street-address"></div>
           <div class="alr-official-field"><label>Telefone</label><input id="alrPhone" value="${escapeAttr(data.telefone)}" inputmode="tel"></div>
           <div class="alr-official-field"><label>E-mail</label><input id="alrEmail" value="${escapeAttr(data.email)}" inputmode="email" autocomplete="email"></div>
         </div>
@@ -227,7 +274,7 @@
       const email = clean($('#alrEmail', modal).value);
       const error = $('#alrOfficialError', modal);
       error.innerHTML = '';
-      if (!legal) return error.innerHTML = '<div class="alr-errorbox">Informe a Razão social identificada no documento.</div>';
+      if (!legal) return error.innerHTML = '<div class="alr-errorbox">Informe o fornecedor identificado no documento.</div>';
       if (!validCnpj(cnpj)) return error.innerHTML = '<div class="alr-errorbox">CNPJ inválido ou não identificado com segurança.</div>';
       if (typeof db !== 'undefined' && Array.isArray(db.suppliers) && db.suppliers.some(s => digits(s.cnpj) === digits(cnpj))) {
         return error.innerHTML = '<div class="alr-errorbox">Este CNPJ já está cadastrado. Nenhum duplicado foi criado.</div>';
@@ -250,7 +297,7 @@
         setField('sNumber', '');
         setField('sCityState', '');
         setField('sNotes', `Importado por leitura inteligente de documento${sourceName ? `: ${sourceName}` : ''}`);
-        setField('sPurpose', 'Importação de documento — finalidade não informada');
+        setField('sPurpose', 'Outros');
         const img = document.getElementById('sImage');
         if (img?.files) img.value = '';
         if (typeof saveSupplier !== 'function') throw new Error('Função de cadastro de fornecedor indisponível.');
