@@ -11,6 +11,7 @@ on:
       - 'scripts/supplier-reader-final-correction.js'
       - 'scripts/nf-stock-entry-reader.js'
       - 'scripts/nf-stock-entry-reader-fix.js'
+      - 'scripts/pdfjs-worker-version-fix.js'
       - 'sw.js'
       - '.github/workflows/leitor-inteligente.yml'
   workflow_dispatch:
@@ -33,6 +34,7 @@ jobs:
           node --check scripts/supplier-reader-final-correction.js
           node --check scripts/nf-stock-entry-reader.js
           node --check scripts/nf-stock-entry-reader-fix.js
+          node --check scripts/pdfjs-worker-version-fix.js
           node --check sw.js
       - name: Verificar integração
         run: |
@@ -40,6 +42,7 @@ jobs:
           grep -q 'supplier-reader-final-correction.js' sw.js
           grep -q 'nf-stock-entry-reader.js' sw.js
           grep -q 'nf-stock-entry-reader-fix.js' sw.js
+          grep -q 'pdfjs-worker-version-fix.js' sw.js
           grep -q 'application/pdf' scripts/supplier-document-reader.js
           grep -q 'capture="environment"' scripts/supplier-document-reader.js
           grep -q 'Fornecedor' scripts/supplier-document-reader-fix.js
@@ -55,5 +58,5 @@ jobs:
           grep -q 'Confirmar entrada' scripts/nf-stock-entry-reader.js
           grep -q 'DADOS DO PRODUTO/SERVIÇO' scripts/nf-stock-entry-reader-fix.js
           grep -q 'pdfStructuredText' scripts/nf-stock-entry-reader-fix.js
-          grep -q 'almoxarifado-v17' sw.js
+          grep -q 'almoxarifado-v18' sw.js
           git diff --check
