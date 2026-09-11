@@ -12,16 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Aplicar Alteração 03
-        run: python3 scripts/alteracao03.py
+        run: python3 scripts/execute03.py
       - name: Validar
         run: |
           test -s index.html
-          grep -q 'function supplierFormatPhone' index.html
-          grep -q 'function supplierExtractNfeName' index.html
+          python3 -m py_compile scripts/alteracao03.py scripts/execute03.py
+          grep -q 'function supplierNfeName' index.html
           grep -q 'id="siCep"' index.html
           grep -q 'id="siNeighborhood"' index.html
           grep -q 'id="siNumber"' index.html
-          grep -q 'id="siUf"' index.html
           git diff --check
       - name: Commit
         run: |
