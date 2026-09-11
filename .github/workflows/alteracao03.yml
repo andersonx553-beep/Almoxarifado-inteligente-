@@ -19,9 +19,9 @@ jobs:
           grep -q 'function supplierFormatPhone' index.html
           grep -q 'function supplierExtractNfeName' index.html
           grep -q 'id="siCep"' index.html
-          grep -q 'id="sNeighborhood"' index.html
-          grep -q 'id="sNumber"' index.html
-          grep -q 'id="sUf"' index.html
+          grep -q 'id="siNeighborhood"' index.html
+          grep -q 'id="siNumber"' index.html
+          grep -q 'id="siUf"' index.html
           git diff --check
       - name: Commit
         run: |
