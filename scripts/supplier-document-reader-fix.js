@@ -14,6 +14,14 @@
   async function load(src,test){if(test())return;await new Promise((ok,bad)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>bad(new Error('Biblioteca de leitura indisponível.'));document.head.appendChild(s)})}
   async function ocr(source){await load('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>!!window.Tesseract);const r=await Tesseract.recognize(source,'por',{logger:m=>{if(typeof m.progress==='number')status('Reconhecendo texto...',Math.round(m.progress*100))}});return r.data.text||''}
   async function readPdf(file){await load('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>!!window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let text='';for(let i=1;i<=pdf.numPages;i++){status(`Lendo PDF — página ${i}/${pdf.numPages}...`,Math.round(i/pdf.numPages*35));const page=await pdf.getPage(i);const tc=await page.getTextContent();text+=tc.items.map(x=>x.str||'').join(' ')+'\n'}if(text.replace(/\s/g,'').length>=80)return text;let o='';for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const v=page.getViewport({scale:2});const c=document.createElement('canvas');c.width=Math.ceil(v.width);c.height=Math.ceil(v.height);await page.render({canvasContext:c.getContext('2d'),viewport:v}).promise;o+=await ocr(c)+'\n'}return o}
+  function normalizeSupplierName(value){
+    let s=clean(value).replace(/^[^A-Za-zÀ-ÿ]*[|:;\-]*\s*/,'');
+    s=s.replace(/^(?:RECEBEMOS\s+DE|RECEBIDO\s+DE|EMITENTE|FORNECEDOR|DESTINAT[ÁA]RIO|REMETENTE)\s*/i,'');
+    s=s.replace(/^[0-9|Il1]+(?=[A-ZÀ-Ý])/,'');
+    s=s.replace(/\b(?:LTDA\.?|LTD\.?|EIRELI|MEI|ME|EPP|S\.?\s*A\.?)\s*$/i,'').trim();
+    s=s.replace(/[\s,.;:/\-]+$/,'').trim();
+    return s;
+  }
   function extract(raw){
     const text=String(raw||'').replace(/\u00a0/g,' '),lines=text.split(/\r?\n/).map(clean).filter(Boolean),out={razaoSocial:'',cnpj:'',cep:'',endereco:'',telefone:'',email:''};
     for(const m of text.matchAll(/\b\d{2}[.\s]?\d{3}[.\s]?\d{3}\/?\d{4}[-\s]?\d{2}\b/g)){if(validCnpj(m[0])){out.cnpj=formatCnpj(m[0]);break}}
@@ -23,8 +31,18 @@
     const idx=out.cnpj?lines.findIndex(x=>x.includes(out.cnpj.split('/')[0])):-1;
     const cand=idx>=0?lines.slice(Math.max(0,idx-7),idx):lines.slice(0,15);
     const bad=/^(CNPJ|CPF|INSCRI|IE\b|DANFE|DOCUMENTO|NOTA|ENDERE|CEP|FONE|TELEFONE|TEL|EMAIL|E-MAIL|CHAVE|EMITENTE|DESTINAT)/i;
-    // Nome: somente o nome identificado como razão social, sem complementar com outros dados.
-    out.razaoSocial=cand.find(x=>x.length>2&&!bad.test(x)&&!/^\d/.test(x)&&/[A-Za-zÀ-ÿ]/.test(x)&&digits(x).length<10)||'';
+    // Prioriza a linha de contexto "RECEBEMOS DE ..." e remove o texto do documento e a razão jurídica.
+    const contextName=cand.find(x=>/\bRECEBEMOS\s+DE\b/i.test(x));
+    if(contextName){
+      const m=contextName.match(/\bRECEBEMOS\s+DE\s+(.+?)(?=\s+(?:CNPJ|CPF|IE|INSCRI|ENDERE|CEP|FONE|TEL|EMAIL|E-MAIL)\b|$)/i);
+      if(m)out.razaoSocial=normalizeSupplierName(m[1]);
+    }
+    if(!out.razaoSocial){
+      const candidate=cand.find(x=>x.length>2&&!bad.test(x)&&!/^\d/.test(x)&&/[A-Za-zÀ-ÿ]/.test(x)&&digits(x).length<10);
+      out.razaoSocial=normalizeSupplierName(candidate||'');
+    }
+    // Se a linha contém o nome comercial seguido de LTDA, conserva apenas o nome comercial.
+    out.razaoSocial=normalizeSupplierName(out.razaoSocial);
     const a=text.match(/(?:RUA|AVENIDA|AV\.?|RODOVIA|ROD\.?|ALAMEDA|TRAVESSA|ESTRADA|PRA[CÇ]A|TV\.?)\s+[^\n]{3,120}/i);
     if(a){let s=clean(a[0]);const n=s.match(/(?:,|\s)N?[º°]?\s*(\d{1,6})(?=\s|,|$)/i);if(n){s=s.replace(n[0],'').replace(/,\s*$/,'');s=`${s}, ${n[1]}`}out.endereco=clean(s)}
     return out;
