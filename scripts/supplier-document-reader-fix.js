@@ -1,0 +1,58 @@
+/* ALMOX LAB — integração do leitor com o cadastro real da Alteração 03. */
+(() => {
+  'use strict';
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  const digits=v=>String(v||'').replace(/\D/g,'');
+  const clean=v=>String(v||'').replace(/\s+/g,' ').trim();
+  const formatCnpj=v=>{const d=digits(v);return d.length===14?d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'):clean(v)};
+  const formatCep=v=>{const d=digits(v);return d.length===8?d.replace(/(\d{5})(\d{3})/,'$1-$2'):clean(v)};
+  const formatPhone=v=>{const d=digits(v);if(d.length===11)return d.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');if(d.length===10)return d.replace(/(\d{2})(\d{4})(\d{4})/,'($1) $2-$3');return clean(v)};
+  const validCnpj=v=>{const c=digits(v);if(c.length!==14||/^([0-9])\1+$/.test(c))return false;let s=0,p=5;for(let i=0;i<12;i++){s+=+c[i]*p;if(--p<2)p=9}let d=s%11<2?0:11-s%11;if(d!==+c[12])return false;s=0;p=6;for(let i=0;i<13;i++){s+=+c[i]*p;if(--p<2)p=9}d=s%11<2?0:11-s%11;return d===+c[13]};
+
+  function status(t,p){const e=$('#almoxReaderStatus');if(e)e.innerHTML=`<strong>${t}</strong><div class="alr-progress"><span style="width:${Math.max(0,Math.min(100,p||0))}%"></span></div>`}
+  function field(id,value){const e=document.getElementById(id);if(!e||!value)return false;e.value=value;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return true}
+  function duplicate(cnpj){try{if(typeof db==='undefined'||!Array.isArray(db.suppliers))return null;const d=digits(cnpj);return db.suppliers.find(s=>digits(s.cnpj)===d)||null}catch{return null}}
+
+  async function load(src,test){if(test())return;await new Promise((ok,bad)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>bad(new Error('Biblioteca de leitura indisponível.'));document.head.appendChild(s)})}
+  async function ocr(source){await load('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',()=>!!window.Tesseract);const r=await Tesseract.recognize(source,'por',{logger:m=>{if(typeof m.progress==='number')status('Reconhecendo texto...',Math.round(m.progress*100))}});return r.data.text||''}
+  async function readPdf(file){await load('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',()=>!!window.pdfjsLib);pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let text='';for(let i=1;i<=pdf.numPages;i++){status(`Lendo PDF — página ${i}/${pdf.numPages}...`,Math.round(i/pdf.numPages*35));const page=await pdf.getPage(i);const tc=await page.getTextContent();text+=tc.items.map(x=>x.str||'').join(' ')+'\n'}if(text.replace(/\s/g,'').length>=80)return text;let o='';for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const v=page.getViewport({scale:2});const c=document.createElement('canvas');c.width=Math.ceil(v.width);c.height=Math.ceil(v.height);await page.render({canvasContext:c.getContext('2d'),viewport:v}).promise;o+=await ocr(c)+'\n'}return o}
+
+  function extract(raw){
+    const text=String(raw||'').replace(/\u00a0/g,' '), lines=text.split(/\r?\n/).map(clean).filter(Boolean), out={razaoSocial:'',cnpj:'',ie:'',telefone:'',endereco:'',numero:'',bairro:'',cidade:'',uf:'',cep:''};
+    for(const m of text.matchAll(/\b\d{2}[.\s]?\d{3}[.\s]?\d{3}\/?\d{4}[-\s]?\d{2}\b/g)){if(validCnpj(m[0])){out.cnpj=formatCnpj(m[0]);break}}
+    const cep=text.match(/\b\d{5}[-.\s]?\d{3}\b/);if(cep)out.cep=formatCep(cep[0]);
+    const ph=[...text.matchAll(/(?:\(?\d{2}\)?\s*)?9?\d{4}[-.\s]?\d{4}/g)].map(x=>x[0]).find(x=>[10,11].includes(digits(x).length));if(ph)out.telefone=formatPhone(ph);
+    const ie=text.match(/(?:INSCRI[ÇC][ÃA]O\s+ESTADUAL|I\.?E\.?)\s*[:\-]?\s*([0-9.\-\/]{6,20})/i);if(ie)out.ie=clean(ie[1]);
+    const idx=out.cnpj?lines.findIndex(x=>x.includes(out.cnpj.split('/')[0])):-1;const cand=idx>=0?lines.slice(Math.max(0,idx-7),idx):lines.slice(0,15);const bad=/^(CNPJ|CPF|INSCRI|IE\b|DANFE|DOCUMENTO|NOTA|ENDERE|CEP|FONE|TELEFONE|CHAVE|EMITENTE|DESTINAT)/i;out.razaoSocial=cand.find(x=>x.length>3&&!bad.test(x)&&!/^\d/.test(x)&&/[A-Za-zÀ-ÿ]/.test(x))||'';
+    const a=text.match(/(?:RUA|AVENIDA|AV\.?|RODOVIA|ROD\.?|ALAMEDA|TRAVESSA|ESTRADA|PRA[CÇ]A|TV\.?)\s+[^\n]{3,120}/i);if(a){let s=clean(a[0]);const n=s.match(/(?:,|\s)N?[º°]?\s*(\d{1,6})(?=\s|,|$)/i);if(n){out.numero=n[1];s=s.replace(n[0],'').replace(/,\s*$/,'')}out.endereco=s}
+    const b=text.match(/(?:BAIRRO|B\.)\s*[:\-]?\s*([^\n,;]{2,60})/i);if(b)out.bairro=clean(b[1]);
+    const cu=text.match(/(?:MUNIC[IÍ]PIO|CIDADE)\s*[:\-]?\s*([A-Za-zÀ-ÿ .'-]{2,50})\s*[-\/]\s*([A-Z]{2})/i);if(cu){out.cidade=clean(cu[1]);out.uf=cu[2].toUpperCase()}
+    if(!out.uf){const known=new Set('AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' '));const m=text.match(/(?:^|[\s\/-])([A-Z]{2})(?:\s|$)/g)||[];const hit=m.map(x=>x.trim().replace(/^[^A-Z]*/,'')).find(x=>known.has(x));if(hit)out.uf=hit}
+    return out;
+  }
+
+  function render(data){const box=$('#almoxReaderResult');if(!box)return;const labels={razaoSocial:'Razão social',cnpj:'CNPJ',ie:'Inscrição estadual',telefone:'Telefone',endereco:'Endereço',numero:'Número',bairro:'Bairro',cidade:'Cidade',uf:'UF',cep:'CEP'};box.innerHTML=Object.entries(data).filter(([,v])=>v).map(([k,v])=>`<div class="alr-row"><span>${labels[k]||k}</span><strong>${v}</strong></div>`).join('')||'<div class="alr-empty">Nenhum dado cadastral confiável foi identificado.</div>'}
+
+  async function processReal(file){
+    try{
+      status('Preparando documento...',5);let raw='';if(file.type==='application/pdf'||/\.pdf$/i.test(file.name))raw=await readPdf(file);else if(file.type.startsWith('image/'))raw=await ocr(file);else throw new Error('Formato não suportado. Use PDF, JPG, JPEG ou PNG.');
+      status('Identificando fornecedor...',90);const data=extract(raw);render(data);if(!data.cnpj&&!data.razaoSocial)throw new Error('Fornecedor não identificado com segurança.');
+      const dup=duplicate(data.cnpj);if(dup){status('Fornecedor já cadastrado — nenhum duplicado criado.',100);$('#almoxReaderResult').insertAdjacentHTML('afterbegin','<div class="alr-warning">⚠️ Já existe fornecedor com este CNPJ.</div>');return}
+      if(typeof openSupplier!=='function')throw new Error('Cadastro de fornecedor não encontrado.');
+      openSupplier('');
+      setTimeout(()=>{
+        field('sLegalName',data.razaoSocial);field('sTradeName',data.razaoSocial);field('sCnpj',data.cnpj);field('sPhone',data.telefone);field('sAddress',data.endereco);field('sNumber',data.numero);field('sNeighborhood',data.bairro);field('sCity',data.cidade);field('sUf',data.uf);field('sCep',data.cep);field('sPurpose','Importação de documento — finalidade não informada');
+        const overlay=$('#almoxReaderOverlay');if(overlay)overlay.classList.remove('open');
+        if($('#modal'))$('#modal').classList.add('open');
+        status('Dados extraídos e cadastro preparado.',100);
+        const save=$$('#modal button').find(b=>/^Salvar$/i.test(clean(b.textContent)));if(save){save.dataset.alrAuto='1';save.focus()}
+      },80);
+    }catch(e){console.error(e);status('Leitura não concluída.',0);const box=$('#almoxReaderResult');if(box)box.innerHTML=`<div class="alr-error">${clean(e.message||'Erro ao processar documento.')}</div>`}
+  }
+
+  function bind(){
+    const file=$('#almoxReaderFile'),cam=$('#almoxReaderCamera');if(!file||file.dataset.alrFix)return;
+    file.dataset.alrFix='1';cam.dataset.alrFix='1';file.onchange=e=>{const f=e.target.files?.[0];if(f)processReal(f)};cam.onchange=e=>{const f=e.target.files?.[0];if(f)processReal(f)};
+  }
+  const timer=setInterval(()=>{bind();if($('#almoxReaderFile'))clearInterval(timer)},100);
+})();
