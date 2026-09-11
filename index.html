@@ -168,35 +168,26 @@ table{width:100%;border-collapse:collapse;background:white}.tablewrap{overflow:a
 <div class="print-doc" id="printDoc"></div>
 
 <script>
-// V2.1 — Cadastro inteligente de fornecedores e vínculo fornecedor ↔ material.
-// Mantemos a mesma chave para preservar os dados existentes.
 const KEY='almoxarifado_v1';
-let db=JSON.parse(localStorage.getItem(KEY)||'null')||{materials:[],suppliers:[],quotes:[],history:[],movements:[],settings:{},count:null};
-db.suppliers=(db.suppliers||[]).map(s=>({...s,purpose:s.purpose||'',legalName:s.legalName||'',tradeName:s.tradeName||'',documents:Array.isArray(s.documents)?s.documents:[]}));
-db.movements=db.movements||[];
-db.deliveries=db.deliveries||[];
-db.materials=(db.materials||[]).map(m=>({...m,area:m.area||'',subgroup:m.subgroup||''}));
+const old=JSON.parse(localStorage.getItem(KEY)||'null');
+const db=old||{materials:[],suppliers:[],quotes:[],history:[],movements:[],deliveries:[],settings:{name:'',legal:'',cnpj:'',phone:'',email:'',dept:'Almoxarifado Aquaville',address:'',image:''},count:null};
+db.materials=db.materials||[];db.suppliers=db.suppliers||[];db.quotes=db.quotes||[];db.history=db.history||[];db.movements=db.movements||[];db.deliveries=db.deliveries||[];db.settings=db.settings||{};db.count=db.count||null;
+db.suppliers=db.suppliers.map(s=>({...s,legalName:s.legalName||'',tradeName:s.tradeName||'',cityState:s.cityState||'',documents:Array.isArray(s.documents)?s.documents:[]}));
+db.movements=db.movements.map(m=>({...m,batchId:m.batchId||m.id}));
+db.deliveries=db.deliveries.map(d=>({...d,items:Array.isArray(d.items)?d.items:[]}));
+db.materials=db.materials.map(m=>({...m,area:m.area||'',subgroup:m.subgroup||''}));
 
 const limpezaCatalogo = [
-  ['ALCOOL 70%','Un',17],
-  ['ALCOOL GEL 5L','Un',1],
-  ['AROMATIZANTE 1L','Un',4],
-  ['BALDE DE PLASTICO','Un',3],
-  ['BOMBRIL C/8UNIDADES','Un',1],
-  ['BORRIFADOR 500ML','Un',7],
-  ['CABO DE ALUMINIO 1,40','Un',5],
-  ['CABO DE CHAPA 1,40CM','Un',1],
-  ['CABO P/ VASSOURA 1,50M','Un',29],
-  ['DESENTUPIDOR VASO SANITARIO','Un',4],
-  ['DESINFETANTE 5L','Un',0],
-  ['DETERGENTE 5L','Un',14],
-  ['ESCOVA SANITÁRIA','Un',3],
-  ['ESPONJA DE FIBRA LIMPEZA PESADA','Un',1],
-  ['ESPONJA DUPLA FACE 3M','Un',23],
-  ['ESSENCIA BOM AR LAVANDA 1L','Un',43],
-  ['FLOTADOR 5L','Un',1],
-  ['LUSTRA MOVEIS 200ML','Un',1],
-  ['PANO DE CHÃO ALGODÃO','Un',21],
+  ['ÁGUA SANITÁRIA 5L','Un',8],
+  ['ALCOOL LIQUIDO 70% 1L','Un',12],
+  ['AMACIANTE DE ROUPA 5L','Un',4],
+  ['BALDE PLASTICO 10L','Un',3],
+  ['DESENGORDURANTE 5L','Un',2],
+  ['DESINFETANTE LAVANDA 5L','Un',7],
+  ['DETERGENTE LIQUIDO 5L','Un',5],
+  ['ESPONJA MULTIUSO','Un',10],
+  ['LIMPADOR MULTIUSO 500ML','Un',6],
+  ['LUSTRA MOVEIS 200ML','Un',2],
   ['PANO DE CHÃO REFORÇADO','Un',39],
   ['PANO MICROFIBRA','Un',14],
   ['PAPEL HIGIENICO 30M','Un',14],
@@ -313,41 +304,24 @@ if(materialSubgroup){
 materialSubgroup.innerHTML='<option value="">Todos os subgrupos</option>'+subs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
 materialSubgroup.value='';
 }
-renderMaterials();
+renderMaterialsAreaSelector();renderMaterials();
 }
 function renderMaterialsAreaSelector(){
 const areas=getMaterialAreas();
-if(!materialAreaFilter || !areas.includes(materialAreaFilter)) materialAreaFilter='';
-materialAreaGrid.innerHTML=[
-`<button class="area-chip ${!materialAreaFilter?'active':''}" onclick="selectMaterialArea('')">📦 TODOS<small>${db.materials.length} materiais</small></button>`,
-...areas.map(a=>{
-const n=db.materials.filter(m=>(m.area||'')===a).length;
-return `<button class="area-chip ${materialAreaFilter===a?'active':''}" onclick="selectMaterialArea('${esc(a)}')">${esc(a)}<small>${n} materiais</small></button>`;
-})
-].join('');
+if(!materialAreaFilter || !areas.includes(materialAreaFilter))materialAreaFilter='';
+materialAreaGrid.innerHTML=[`<button class="area-chip ${!materialAreaFilter?'active':''}" onclick="selectMaterialArea('')">Todas as áreas<small>${db.materials.length} materiais</small></button>`,...areas.map(a=>{const n=db.materials.filter(m=>(m.area||'')===a).length;return `<button class="area-chip ${a===materialAreaFilter?'active':''}" onclick="selectMaterialArea('${esc(a)}')">${esc(a)}<small>${n} materiais</small></button>`})].join('');
 materialSelectionBadge.textContent=materialAreaFilter||'TODOS';
 }
 function renderMaterials(){
 renderMaterialsAreaSelector();
-let q=(materialSearch?.value||'').toLowerCase(),f=materialFilter?.value||'',sub=materialSubgroup?.value||'';
-let arr=db.materials.filter(m=>{
-const areaOk=!materialAreaFilter || (m.area||'')===materialAreaFilter;
-const subOk=!sub || (m.subgroup||'')===sub;
-const text=(m.name+' '+(m.code||'')+' '+(m.subgroup||'')).toLowerCase();
-return areaOk&&subOk&&text.includes(q);
-}).filter(m=>!f||status(m)===f);
-materialsBody.innerHTML=arr.length?arr.map(m=>`<tr><td>${esc(m.code)}</td><td><b>${esc(m.name)}</b><br><small class="muted">${esc(m.category||'')}</small></td><td>${esc(m.area||'—')}</td><td>${esc(m.subgroup||'—')}</td><td>${esc(m.unit)}</td><td>${m.current==null?'—':m.current}</td><td>${m.min}</td><td>${m.ideal}</td><td><b>${buy(m)}</b></td><td><span class="badge ${status(m)}">${statusLabel(status(m))}</span></td><td><button class="secondary" onclick="openMaterial('${m.id}')">Editar</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Nenhum material encontrado.</td></tr>';
+let q=(materialSearch?.value||'').toLowerCase(),f=materialFilter?.value||'',sg=materialSubgroup?.value||'';
+let arr=db.materials.filter(m=>!materialAreaFilter||(m.area||'')===materialAreaFilter).filter(m=>!sg||(m.subgroup||'')===sg).filter(m=>(m.name+' '+(m.code||'')).toLowerCase().includes(q)).filter(m=>!f||status(m)===f);
+materialsBody.innerHTML=arr.length?arr.map(m=>`<tr><td>${esc(m.code)}</td><td><b>${esc(m.name)}</b></td><td>${esc(m.area||'')}</td><td>${esc(m.subgroup||'')}</td><td>${esc(m.unit)}</td><td>${m.current==null?'—':m.current}</td><td>${m.min}</td><td>${m.ideal}</td><td>${buy(m)}</td><td><span class="badge ${status(m)}">${statusLabel(status(m))}</span></td><td><button class="secondary" onclick="openMaterial('${m.id}')">Editar</button></td></tr>`).join(''):'<tr><td colspan="11" class="empty">Nenhum material encontrado.</td></tr>';
 }
-let importRows=[];
-let importSourceMeta={name:'',format:'',pages:0,area:''};
-let supplierImportState={file:null,sourceMeta:{name:'',format:'',pages:0},data:null,rawText:''};
-
-function openImportMaterials(){
-  importRows=[];
-  importSourceMeta={name:'',format:'',pages:0,area:''};
-  renderImportUpload();
-  importModal.classList.add('open');
-}
+function openImportMaterials(){importRows=[];importSourceMeta={name:'',format:'',pages:0,area:''};renderImportUpload();importModal.classList.add('open')}
+let importRows=[],importSourceMeta={name:'',format:'',pages:0,area:''};
+let supplierImportState={file:null,sourceMeta:{name:'',format:'',pages:0},data:null,rawText:'',existingId:''};
+const modal=document.getElementById('modal'),modalContent=document.getElementById('modalContent'),importModal=document.getElementById('importModal'),importContent=document.getElementById('importContent'),printDoc=document.getElementById('printDoc');
 function closeImportModal(){importModal.classList.remove('open')}
 function renderImportUpload(message=''){
   importContent.innerHTML=`<h2>Importar materiais por documento</h2>
@@ -457,22 +431,94 @@ function renderSupplierImportUpload(message=''){importContent.innerHTML=`<h2>Imp
 function renderSupplierImportProcessing(text='Processando documento...'){importContent.innerHTML=`<h2>Importar fornecedor por documento</h2><div class="card" style="text-align:center;padding:28px"><div style="font-size:28px">⏳</div><h3>${esc(text)}</h3><div class="muted">Aguarde. Nenhum fornecedor será salvo antes da conferência.</div></div>`}
 function supplierNormalize(v){return normalizeImportText(v).replace(/\s+/g,' ').trim()}
 function supplierFold(v){return supplierNormalize(v).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
-function supplierFieldFromLines(lines,labels){const folds=labels.map(supplierFold);for(let i=0;i<lines.length;i++){const raw=supplierNormalize(lines[i]);const f=supplierFold(raw);const idx=folds.findIndex(l=>f===l||f.startsWith(l+':')||f.startsWith(l+' -'));if(idx<0)continue;let value=raw.replace(new RegExp('^'+labels[idx].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*[:\\-]?\\s*','i'),'').trim();if(value)return value;for(let j=i+1;j<Math.min(lines.length,i+3);j++){const nxt=supplierNormalize(lines[j]);if(nxt&&!/^(fornecedor|razao social|nome fantasia|cnpj|endereco|fone|telefone|whatsapp|e-?mail|contato|responsavel|cidade|estado|uf)\s*:/i.test(nxt))return nxt}}return ''}
+function supplierFieldFromLines(lines,labels){const folds=labels.map(supplierFold);for(let i=0;i<lines.length;i++){const raw=supplierNormalize(lines[i]);const f=supplierFold(raw);const idx=folds.findIndex(l=>f===l||f.startsWith(l+':')||f.startsWith(l+' -'));if(idx<0)continue;let value=raw.replace(new RegExp('^'+labels[idx].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\s*[:\-]?\s*','i'),'').trim();if(value)return value;for(let j=i+1;j<Math.min(lines.length,i+3);j++){const nxt=supplierNormalize(lines[j]);if(nxt&&!/^(fornecedor|razao social|nome fantasia|cnpj|endereco|fone|telefone|whatsapp|e-?mail|contato|responsavel|cidade|estado|uf)\s*:/i.test(nxt))return nxt}}return ''}
+function supplierFormatCnpj(value){
+  const d=String(value||'').replace(/\D/g,'');
+  if(d.length===14)return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
+  return supplierNormalize(value);
+}
+function supplierFormatPhone(value){
+  const d=String(value||'').replace(/\D/g,'');
+  if(d.length===11)return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if(d.length===10)return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return supplierNormalize(value);
+}
+function supplierCleanCompanyName(value){
+  let v=supplierNormalize(value).replace(/^\d+\s+/,'').trim();
+  v=v.replace(/\bLTOA\b/ig,'LTDA').replace(/\bLTOA\.\b/ig,'LTDA.');
+  return v;
+}
 function extractSupplierData(lines){
-  const all=lines.map(supplierNormalize).filter(Boolean), joined=all.join('\n');
-  const data={legalName:supplierFieldFromLines(all,['RAZÃO SOCIAL','RAZAO SOCIAL']),tradeName:supplierFieldFromLines(all,['NOME FANTASIA']),name:supplierFieldFromLines(all,['FORNECEDOR']),cnpj:'',phone:'',whatsapp:'',email:'',contact:supplierFieldFromLines(all,['CONTATO','RESPONSÁVEL','RESPONSAVEL']),address:supplierFieldFromLines(all,['ENDEREÇO','ENDERECO']),cityState:''};
-  const cnpjLabel=supplierFieldFromLines(all,['CNPJ']);if(cnpjLabel){const c=cnpjLabel.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/);if(c)data.cnpj=c[0]}
-  const emailLabel=supplierFieldFromLines(all,['E-MAIL','EMAIL']);if(emailLabel){const e=emailLabel.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);if(e)data.email=e[0]}
-  const wa=all.find(x=>/^whatsapp\s*[:\-]/i.test(x));if(wa){const m=wa.match(/(?:whatsapp\s*[:\-]?\s*)?(\(?\d{2}\)?\s*\d{4,5}[\s-]?\d{4})/i);if(m)data.whatsapp=m[1].trim()}
-  const phoneLabel=all.filter(x=>/^(fone|telefone|tel\.?|celular)\s*[:\-]/i.test(x));const phones=phoneLabel.flatMap(x=>[...x.matchAll(/(?:fone|telefone|tel\.?|celular)\s*[:\-]?\s*(\(?\d{2}\)?\s*\d{4,5}[\s-]?\d{4})/ig)].map(m=>m[1]));if(phones)data.phone=phones.find(x=>x!==data.whatsapp)||phones[0]||'';
-  if(!data.name)data.name=data.tradeName||data.legalName||'';
-  const cs=supplierFieldFromLines(all,['CIDADE/ESTADO','CIDADE / ESTADO']);if(cs)data.cityState=cs;
+  const all=lines.map(supplierNormalize).filter(Boolean);
+  const joined=all.join('\n');
+  const destinationIndex=all.findIndex(x=>supplierFold(x).includes('DESTINATARIO/REMETENTE'));
+  const header=destinationIndex>=0?all.slice(0,destinationIndex):all.slice(0,Math.min(all.length,30));
+  const headerText=header.join('\n');
+  const data={legalName:'',tradeName:'',name:'',cnpj:'',phone:'',whatsapp:'',email:'',contact:'',address:'',cityState:''};
+
+  // NF-e/DANFE: o primeiro CNPJ do cabeçalho pertence ao emitente/fornecedor;
+  // o segundo normalmente aparece somente depois de DESTINATÁRIO/REMETENTE.
+  const cnpjMatches=[...headerText.matchAll(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g)];
+  if(cnpjMatches.length)data.cnpj=supplierFormatCnpj(cnpjMatches[0][0]);
+  const accessKeyLine=header.find(x=>x.replace(/\D/g,'').length===44);
+  if(accessKeyLine){const accessKey=accessKeyLine.replace(/\D/g,'');data.cnpj=supplierFormatCnpj(accessKey.slice(6,20));}
+
+  // O nome do emitente costuma aparecer na frase inicial da NF-e.
+  const received=headerText.match(/RECEBEMOS\s+DE(?:\s+\d+)?\s+(.+?)\s+OS\s+PRODUTOS(?:\/SERVI[ÇC]OS)?/i);
+  if(received)data.name=supplierCleanCompanyName(received[1]);
+
+  // Fallback: procurar uma linha com identificação empresarial no bloco do emitente.
+  if(!data.name){
+    const company=header.find(x=>/\b(LTDA|LTOA|S\.?A\.?|EIRELI|ME|EPP|COM[ÉE]RCIO|SUPERMERCADO|DISTRIBUIDORA|IND[ÚU]STRIA)\b/i.test(x)&&!/(DANFE|DESTINAT[ÁA]RIO|REMETENTE)/i.test(x));
+    if(company)data.name=supplierCleanCompanyName(company);
+  }
+  if(data.name)data.legalName=data.name;
+
+  // Telefone do fornecedor: aceita Fone/Fax, FonejFax e variações comuns de OCR.
+  const phoneRe=/(?:fone\s*[\/j|]?\s*fax|telefone|tel\.?|celular|fone)\s*[:\-]?\s*(\(?\d{2}\)?\s*\d{4,5}[\s-]?\d{4})/i;
+  const phoneMatch=headerText.match(phoneRe);
+  if(phoneMatch)data.phone=supplierFormatPhone(phoneMatch[1]);
+
+  const emailMatch=headerText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  if(emailMatch)data.email=emailMatch[0];
+
+  // Endereço do fornecedor: no DANFE ele fica no quadro do emitente, antes do destinatário.
+  const addressIndex=header.findIndex(x=>/^(rua|r\.?|avenida|av\.?|travessa|tv\.?|alameda|rodovia|estrada|pra[çc]a)\b/i.test(x));
+  if(addressIndex>=0){
+    data.address=supplierNormalize(header[addressIndex]).replace(/\s*-\s*$/,'');
+    const next=header[addressIndex+1]||'';
+    if(next&&!/(DANFE|FONE|TELEFONE|CNPJ|INSCRIÇÃO|IE|CIDADE\s*\/?\s*UF|SA[IÍ]DA|ENTRADA|P[ÁA]GINA|N[ºO])/i.test(next)){const neighborhood=next.replace(/\b\d{5}-?\d{3}\b/,'').replace(/\s*[-—]\s*$/,'').trim();if(neighborhood)data.address+=' '+neighborhood;}
+  }
+
+  // Cidade/UF e CEP: prioriza o primeiro par encontrado no bloco do emitente.
+  const cityLine=header.find(x=>{
+    const f=supplierFold(x);
+    if(/^(CIDADE|CIDADE\s*\/?\s*UF|CIDADE\s*\/?\s*ESTADO|MUNICIPIO|MUNICÍPIO)/.test(f))return false;
+    return /^.{2,40}\s*[-/]\s*[A-Z]{2}(?:\s+N[ºO]\.?\s*\d+)?$/i.test(x);
+  });
+  if(cityLine){const m=cityLine.match(/^(.{2,40})\s*[-/]\s*([A-Z]{2})(?:\s+N[ºO]\.?\s*\d+)?$/i);if(m)data.cityState=`${supplierNormalize(m[1])} / ${m[2].toUpperCase()}`}
+  if(!data.cityState){
+    const ufLine=header.find(x=>/\b[A-Z]{2}\b/.test(x)&&/[-/]\s*[A-Z]{2}\b/.test(x)&&!/^CIDADE\s*\/?\s*(UF|ESTADO)$/i.test(x));
+    if(ufLine)data.cityState=ufLine;
+  }
+  const cepMatch=headerText.match(/\b\d{5}-?\d{3}\b/);
+  if(cepMatch)data.address=data.address?`${data.address} — CEP ${cepMatch[0]}`:`CEP ${cepMatch[0]}`;
+
+  // Caso o PDF use campos explícitos em vez do layout DANFE.
+  if(!data.legalName)data.legalName=supplierFieldFromLines(all,['RAZÃO SOCIAL','RAZAO SOCIAL'])||data.name;
+  if(!data.tradeName)data.tradeName=supplierFieldFromLines(all,['NOME FANTASIA']);
+  if(!data.name)data.name=data.tradeName||data.legalName||supplierFieldFromLines(all,['FORNECEDOR'])||'';
+  if(!data.cnpj){const c=supplierFieldFromLines(all,['CNPJ']).match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/);if(c)data.cnpj=supplierFormatCnpj(c[0])}
+  if(!data.phone){const p=supplierFieldFromLines(all,['TELEFONE','FONE','TEL','CELULAR']).match(/\(?\d{2}\)?\s*\d{4,5}[\s-]?\d{4}/);if(p)data.phone=supplierFormatPhone(p[0])}
+  if(!data.email){const e=supplierFieldFromLines(all,['E-MAIL','EMAIL']).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);if(e)data.email=e[0]}
+  if(!data.address)data.address=supplierFieldFromLines(all,['ENDEREÇO','ENDERECO']);
+  if(!data.cityState)data.cityState=supplierFieldFromLines(all,['CIDADE/ESTADO','CIDADE / ESTADO','CIDADE/UF','CIDADE / UF']);
   return data;
 }
 function findExistingSupplier(data){const c=supplierFold(data.cnpj);const name=supplierFold(data.tradeName||data.legalName||data.name);return db.suppliers.find(s=>(c&&supplierFold(s.cnpj)===c)||(name&&[s.name,s.tradeName,s.legalName].some(v=>supplierFold(v)===name))||(data.email&&supplierFold(s.email)===supplierFold(data.email)))||null}
 function renderSupplierImportPreview(){const d=supplierImportState.data||{};const existing=findExistingSupplier(d);supplierImportState.existingId=existing?.id||'';importContent.innerHTML=`<h2>Conferir fornecedor</h2><div class="muted"><b>Documento:</b> ${esc(supplierImportState.sourceMeta.name)} ${supplierImportState.sourceMeta.pages?`• <b>Páginas:</b> ${supplierImportState.sourceMeta.pages}`:''}</div><div class="import-summary"><span class="badge">${existing?'🟡 Fornecedor possivelmente existente':'🟢 Novo fornecedor'}</span></div>${existing?`<div class="card" style="margin-bottom:14px;background:#fffaf0;border-color:#f0d59b"><b>Possível duplicidade</b><div class="muted">Fornecedor existente: ${esc(existing.name||existing.tradeName||existing.legalName)}</div><div class="muted">CNPJ: ${esc(existing.cnpj||'Não informado')}</div></div>`:''}<div class="card"><div class="formgrid"><div class="field"><label>Razão social</label><input id="siLegalName" value="${esc(d.legalName||'')}"></div><div class="field"><label>Nome fantasia</label><input id="siTradeName" value="${esc(d.tradeName||'')}"></div><div class="field"><label>CNPJ</label><input id="siCnpj" value="${esc(d.cnpj||'')}"></div><div class="field"><label>Telefone</label><input id="siPhone" value="${esc(d.phone||'')}"></div><div class="field"><label>WhatsApp</label><input id="siWhatsapp" value="${esc(d.whatsapp||'')}"></div><div class="field"><label>E-mail</label><input id="siEmail" value="${esc(d.email||'')}"></div><div class="field"><label>Responsável/Contato</label><input id="siContact" value="${esc(d.contact||'')}"></div><div class="field"><label>Cidade/Estado</label><input id="siCityState" value="${esc(d.cityState||'')}"></div><div class="field full"><label>Endereço</label><input id="siAddress" value="${esc(d.address||'')}"></div></div></div><div class="card" style="margin-top:14px;background:#f8fbff;border-color:#dce7f7"><b>Documento original</b><div class="muted" style="margin-top:5px">${esc(supplierImportState.sourceMeta.name)} • ${formatFileSize(supplierImportState.file?.size)}</div><div class="muted" style="margin-top:5px">O arquivo original será mantido associado ao fornecedor após a confirmação.</div></div><div class="actions"><button class="secondary" onclick="renderSupplierImportUpload()">← Escolher outro</button><button class="secondary" onclick="closeImportModal()">Cancelar</button><button onclick="confirmSupplierImport()">✓ Confirmar cadastro</button></div>`}
 function collectSupplierImportForm(){supplierImportState.data={...supplierImportState.data,legalName:document.getElementById('siLegalName').value.trim(),tradeName:document.getElementById('siTradeName').value.trim(),cnpj:document.getElementById('siCnpj').value.trim(),phone:document.getElementById('siPhone').value.trim(),whatsapp:document.getElementById('siWhatsapp').value.trim(),email:document.getElementById('siEmail').value.trim(),contact:document.getElementById('siContact').value.trim(),cityState:document.getElementById('siCityState').value.trim(),address:document.getElementById('siAddress').value.trim()}}
-async function handleSupplierImportFile(file){if(!file)return;const ext=(file.name.split('.').pop()||'').toLowerCase();if(!['pdf','doc','docx'].includes(ext)){renderSupplierImportUpload('Formato não suportado. Selecione PDF, DOC ou DOCX.');return}supplierImportState.file=file;supplierImportState.sourceMeta={name:file.name,format:ext.toUpperCase(),pages:0};renderSupplierImportProcessing(`Lendo ${file.name}...`);try{let lines=[];if(ext==='pdf'){const result=await extractPdfText(file);supplierImportState.sourceMeta.pages=result.pdf.numPages;lines=result.lines;if(result.weakPages>0||lines.length<5){renderSupplierImportProcessing('Texto insuficiente no PDF. Tentando leitura por OCR...');const ocr=await ocrPdf(file);lines=ocr.split(/\r?\n/);}}else if(ext==='docx'){const text=await extractDocx(file);lines=text.split(/\r?\n/)}else{throw new Error('Arquivos DOC antigos (.doc) não possuem leitura direta confiável no navegador. Converta para DOCX ou PDF e tente novamente.')}supplierImportState.rawText=lines.join('\n');supplierImportState.data=extractSupplierData(lines);if(!supplierImportState.data.name&&!supplierImportState.data.legalName&&!supplierImportState.data.tradeName&&!supplierImportState.data.cnpj)throw new Error('Não foi possível identificar dados suficientes do fornecedor no documento.');renderSupplierImportPreview()}catch(err){renderSupplierImportUpload(err?.message||'Não foi possível processar o documento.')}}
+async function handleSupplierImportFile(file){if(!file)return;const ext=(file.name.split('.').pop()||'').toLowerCase();if(!['pdf','doc','docx'].includes(ext)){renderSupplierImportUpload('Formato não suportado. Selecione PDF, DOC ou DOCX.');return}supplierImportState.file=file;supplierImportState.sourceMeta={name:file.name,format:ext.toUpperCase(),pages:0};renderSupplierImportProcessing(`Lendo ${file.name}...`);try{let lines=[];if(ext==='pdf'){const result=await extractPdfText(file);supplierImportState.sourceMeta.pages=result.pdf.numPages;lines=result.lines;if(result.weakPages>0||lines.length<5){renderSupplierImportProcessing('Texto insuficiente no PDF. Tentando leitura por OCR...');const ocr=await ocrPdf(file);lines=ocr.split(/\r?\n/);}}else if(ext==='docx'){const text=await extractDocx(file);lines=text.split(/\r?\n/)}else{throw new Error('Arquivos DOC antigos (.doc) não possuem leitura direta confiável no navegador. Converta para DOCX ou PDF e tente novamente')}supplierImportState.rawText=lines.join('\n');supplierImportState.data=extractSupplierData(lines);if((!supplierImportState.data.name||!supplierImportState.data.cnpj||!supplierImportState.data.phone||!supplierImportState.data.address)&&ext==='pdf'){try{renderSupplierImportProcessing('Alguns campos do emitente não foram identificados. Reforçando a leitura do PDF...');const ocr=await ocrPdf(file);const ocrLines=ocr.split(/\r?\n/);const ocrData=extractSupplierData(ocrLines);supplierImportState.data={...supplierImportState.data,...Object.fromEntries(Object.entries(ocrData).filter(([k,v])=>String(v||'').trim()))};supplierImportState.rawText+='\n'+ocrLines.join('\n')}catch(e){console.warn('OCR complementar do fornecedor falhou:',e)}}if(!supplierImportState.data.name&&!supplierImportState.data.legalName&&!supplierImportState.data.tradeName&&!supplierImportState.data.cnpj)throw new Error('Não foi possível identificar dados suficientes do fornecedor no documento.');renderSupplierImportPreview()}catch(err){renderSupplierImportUpload(err?.message||'Não foi possível processar o documento.')}}
 async function confirmSupplierImport(){collectSupplierImportForm();const d=supplierImportState.data||{};const name=(d.tradeName||d.legalName||d.name||'').trim();if(!name)return toast('Informe a Razão social ou o Nome fantasia.');if(d.cnpj){const existing=db.suppliers.find(s=>supplierFold(s.cnpj)===supplierFold(d.cnpj));if(existing)return toast('Fornecedor com este CNPJ já está cadastrado. Revise o cadastro antes de continuar.')}const id=crypto.randomUUID();const displayName=d.tradeName||d.legalName||d.name;const supplier={id,name:displayName,legalName:d.legalName||'',tradeName:d.tradeName||'',cnpj:d.cnpj||'',phone:d.phone||'',whatsapp:d.whatsapp||'',email:d.email||'',contact:d.contact||'',address:d.address||'',cityState:d.cityState||'',notes:'Importado de '+supplierImportState.sourceMeta.name,purpose:'',image:'',documents:[]};if(supplierImportState.file){const docId=crypto.randomUUID();await saveSupplierDocumentBlob(docId,supplierImportState.file);supplier.documents.push({id:docId,name:supplierImportState.file.name,type:supplierImportState.file.type||supplierImportState.sourceMeta.format,size:supplierImportState.file.size,date:new Date().toISOString()})}db.suppliers.push(supplier);save();closeImportModal();nav('suppliers');toast('Fornecedor importado e documento vinculado com sucesso.')}
 async function openSupplierDocument(supplierId,docId){try{const doc=await getSupplierDocumentBlob(docId);if(!doc?.blob)throw new Error('Documento não encontrado no armazenamento.');const url=URL.createObjectURL(doc.blob);const w=window.open(url,'_blank');if(!w)toast('O navegador bloqueou a abertura do documento. Permita pop-ups para visualizar.');setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){toast(e.message||'Não foi possível abrir o documento.')}}
 
@@ -652,55 +698,30 @@ function renderCountAreaSelector(){
   const areas=getCountAreas();
   if(!countAreaFilter || !areas.includes(countAreaFilter)) countAreaFilter='';
   countAreaGrid.innerHTML=[
-    `<button class="area-chip ${!countAreaFilter?'active':''}" onclick="selectCountArea('')">📦 TODOS<small>${db.materials.length} materiais</small></button>`,
-    ...areas.map(a=>{
-      const n=db.materials.filter(m=>(m.area||'')===a).length;
-      return `<button class="area-chip ${countAreaFilter===a?'active':''}" onclick="selectCountArea('${esc(a)}')">${esc(a)}<small>${n} materiais</small></button>`;
-    })
+    `<button class="area-chip ${!countAreaFilter?'active':''}" onclick="selectCountArea('')">Todas as áreas<small>${db.materials.length} materiais</small></button>`,
+    ...areas.map(a=>{const n=db.materials.filter(m=>(m.area||'')===a).length;return `<button class="area-chip ${a===countAreaFilter?'active':''}" onclick="selectCountArea('${esc(a)}')">${esc(a)}<small>${n} materiais</small></button>`})
   ].join('');
   countSelectionBadge.textContent=countAreaFilter||'TODOS';
 }
 function renderCount(){
   renderCountAreaSelector();
-  if(!db.count){
-    countInfo.textContent='Nenhuma contagem ativa. Clique em "Nova contagem" para começar.';
-    countBody.innerHTML='<div class="card empty">Clique em "Nova contagem" para começar.</div>';
-    countBatchInfo.textContent='Nenhuma contagem ativa.';
-    return;
-  }
-  const q=(countSearch?.value||'').trim().toLowerCase();
-  const sub=countSubgroup?.value||'';
-  let arr=db.materials.filter(m=>{
-    const areaOk=!countAreaFilter || (m.area||'')===countAreaFilter;
-    const subOk=!sub || (m.subgroup||'')===sub;
-    const text=(m.name+' '+(m.code||'')+' '+(m.subgroup||'')).toLowerCase();
-    return areaOk&&subOk&&(!q||text.includes(q));
-  });
-  const items=db.count.items;
-  const counted=Object.values(items).filter(x=>x.status==='counted').length;
-  const selectedCount=arr.length;
-  countInfo.textContent=`Contagem iniciada em ${new Date(db.count.started).toLocaleString('pt-BR')} • ${counted}/${db.materials.length} materiais já registrados`;
-  countBatchInfo.innerHTML=`<b>${selectedCount}</b> materiais carregados${countAreaFilter?' em <b>'+esc(countAreaFilter)+'</b>':''}${sub?' / <b>'+esc(sub)+'</b>':''}.`;
-  countBody.innerHTML=arr.length?arr.map(m=>{
-    const x=items[m.id]||{status:'pending',qty:null};
-    const qty=x.qty;
-    const sug=qty==null?'—':Math.max((m.ideal||0)-qty,0);
-    const status=qty==null?'pending':(qty<(m.min||0)?'critical':qty<(m.ideal||0)?'reposition':'ok');
-    return `<div class="card count-card" style="margin-bottom:8px">
-      <div><b>${esc(m.name)}</b><div class="muted">${esc(m.code||'Sem código')} • ${esc(m.subgroup||'Sem subgrupo')} • Ideal: ${m.ideal||0} ${esc(m.unit||'Un')}</div></div>
-      <input type="number" min="0" step="any" value="${qty??''}" placeholder="Quantidade" onchange="setCount('${m.id}',this.value)">
-      <div><span class="badge ${status}">${qty==null?'Pendente':`Comprar: ${sug}`}</span></div>
-    </div>`;
-  }).join(''):'<div class="card empty">Nenhum material encontrado para os filtros escolhidos.</div>';
+  const sg=countSubgroup?.value||'',q=(countSearch?.value||'').toLowerCase();
+  const arr=db.materials.filter(m=>!countAreaFilter||(m.area||'')===countAreaFilter).filter(m=>!sg||(m.subgroup||'')===sg).filter(m=>(m.name+' '+(m.code||'')).toLowerCase().includes(q));
+  countBatchInfo.textContent=countAreaFilter?`${arr.length} material(is) na área ${countAreaFilter}.`:`${arr.length} material(is) no almoxarifado.`;
+  countInfo.textContent=countAreaFilter?`Área selecionada: ${countAreaFilter}.`: 'Escolha uma área para carregar automaticamente os materiais que deseja contar.';
+  const groups={};arr.forEach(m=>{const key=(m.subgroup||'Sem subgrupo').trim();(groups[key]??=[]).push(m)});
+  const keys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  countBody.innerHTML=keys.length?keys.map(k=>`<div class="count-group-title">${esc(k)}</div>${groups[k].map(m=>{const it=db.count?.items?.[m.id]||{status:'pending',qty:null};return `<div class="card count-card" style="margin-top:8px"><div><b>${esc(m.name)}</b><div class="muted">${esc(m.code||'Sem código')} • ${esc(m.unit)}${m.current!=null?` • Estoque atual: ${m.current}`:''}</div></div><input type="number" min="0" step="any" value="${it.qty??''}" placeholder="Qtd. contada" onchange="setCountItem('${m.id}',this.value)"><span class="badge ${it.status==='counted'?'ok':'pending'}">${it.status==='counted'?'Contado':'Pendente'}</span></div>`}).join('')}`).join(''):'<div class="empty">Nenhum material encontrado para os filtros atuais.</div>';
 }
-function setCount(id,val){if(!db.count)return;let n=val===''?null:+val;if(n!==null&&n<0)return toast('Quantidade inválida.');db.count.items[id]={status:n===null?'pending':'counted',qty:n};save();renderCount()}
+function setCountItem(id,v){if(!db.count)return;const n=String(v).trim();if(n===''||+n<0){db.count.items[id]={status:'pending',qty:null};}else{db.count.items[id]={status:'counted',qty:+n};}save();renderCount();}
 function finishCount(){
-if(!db.count)return toast('Nenhuma contagem ativa.');
-let vals=Object.values(db.count.items),pending=vals.filter(x=>x.status!=='counted').length;
-if(pending&&!confirm(`Ainda existem ${pending} produtos pendentes. Finalizar mesmo assim?`))return;
-let totalBuy=0,rep=0;db.materials.forEach(m=>{let x=db.count.items[m.id];if(x?.status==='counted'){m.current=x.qty;m.lastCount=new Date().toISOString();let b=buy(m);if(b>0)rep++;totalBuy+=b;}});
-db.history.unshift({date:new Date().toISOString(),counted:vals.filter(x=>x.status==='counted').length,replenishment:rep,totalBuy});
-db.count=null;save();nav('replenishment');toast('Contagem finalizada e estoque atualizado.');
+  if(!db.count)return toast('Nenhuma contagem em andamento.');
+  const vals=db.materials.map(m=>db.count.items[m.id]||{status:'pending',qty:null});
+  const pending=vals.filter(x=>x.status!=='counted').length;
+  if(pending&&!confirm(`Ainda existem ${pending} produtos pendentes. Finalizar mesmo assim?`))return;
+  let totalBuy=0,rep=0;db.materials.forEach(m=>{let x=db.count.items[m.id];if(x?.status==='counted'){m.current=x.qty;m.lastCount=new Date().toISOString();let b=buy(m);if(b>0)rep++;totalBuy+=b;}});
+  db.history.unshift({date:new Date().toISOString(),counted:vals.filter(x=>x.status==='counted').length,replenishment:rep,totalBuy});
+  db.count=null;save();nav('replenishment');toast('Contagem finalizada e estoque atualizado.');
 }
 function movementTypeLabel(t){return {entry:'🟢 Entrada',exit:'🔴 Saída',adjustment:'🔵 Ajuste'}[t]||t}
 
