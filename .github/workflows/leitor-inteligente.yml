@@ -7,6 +7,7 @@ on:
       - 'scripts/supplier-document-reader-fix.js'
       - 'scripts/supplier-document-reader-autosave.js'
       - 'scripts/supplier-document-reader-ie.js'
+      - 'scripts/supplier-manual-fix.js'
       - 'sw.js'
       - '.github/workflows/leitor-inteligente.yml'
   workflow_dispatch:
@@ -25,6 +26,7 @@ jobs:
           node --check scripts/supplier-document-reader-fix.js
           node --check scripts/supplier-document-reader-autosave.js
           node --check scripts/supplier-document-reader-ie.js
+          node --check scripts/supplier-manual-fix.js
           node --check sw.js
       - name: Verificar integração
         run: |
@@ -32,6 +34,7 @@ jobs:
           grep -q 'supplier-document-reader-fix.js' sw.js
           grep -q 'supplier-document-reader-autosave.js' sw.js
           grep -q 'supplier-document-reader-ie.js' sw.js
+          grep -q 'supplier-manual-fix.js' sw.js
           grep -q 'application/pdf' scripts/supplier-document-reader.js
           grep -q 'capture="environment"' scripts/supplier-document-reader.js
           grep -q 'tesseract.js' scripts/supplier-document-reader-fix.js
@@ -40,5 +43,7 @@ jobs:
           grep -q 'Endereço + número' scripts/supplier-document-reader-fix.js
           grep -q 'Salvar fornecedor' scripts/supplier-document-reader-fix.js
           grep -q 'saveSupplier' scripts/supplier-document-reader-fix.js
-          grep -q 'almoxarifado-v12' sw.js
+          grep -q 'sCityState' scripts/supplier-manual-fix.js
+          grep -q 'PURPOSE_DEFAULT' scripts/supplier-manual-fix.js
+          grep -q 'almoxarifado-v13' sw.js
           git diff --check
