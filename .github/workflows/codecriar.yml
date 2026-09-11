@@ -1,0 +1,19 @@
+name: Codecriar Validation
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  prototype-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate prototype
+        run: node tests/prototype-smoke.mjs
