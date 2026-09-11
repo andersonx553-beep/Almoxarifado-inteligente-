@@ -9,8 +9,7 @@ on:
       - 'scripts/supplier-document-reader-ie.js'
       - 'scripts/supplier-manual-fix.js'
       - 'scripts/supplier-reader-final-correction.js'
-      - 'scripts/nf-stock-entry-reader.js'
-      - 'scripts/nf-stock-entry-reader-fix.js'
+      - 'scripts/nf-entry-intelligent.js'
       - 'scripts/pdfjs-worker-version-fix.js'
       - 'sw.js'
       - '.github/workflows/leitor-inteligente.yml'
@@ -32,33 +31,26 @@ jobs:
           node --check scripts/supplier-document-reader-ie.js
           node --check scripts/supplier-manual-fix.js
           node --check scripts/supplier-reader-final-correction.js
-          node --check scripts/nf-stock-entry-reader.js
-          node --check scripts/nf-stock-entry-reader-fix.js
+          node --check scripts/nf-entry-intelligent.js
           node --check scripts/pdfjs-worker-version-fix.js
           node --check sw.js
-      - name: Verificar integração
+      - name: Verificar arquitetura da leitura
         run: |
-          grep -q 'supplier-document-reader.js' sw.js
-          grep -q 'supplier-reader-final-correction.js' sw.js
-          grep -q 'nf-stock-entry-reader.js' sw.js
-          grep -q 'nf-stock-entry-reader-fix.js' sw.js
+          test -f scripts/nf-entry-intelligent.js
+          ! test -f scripts/nf-stock-entry-reader.js
+          ! test -f scripts/nf-stock-entry-reader-fix.js
+          ! test -f scripts/nf-smart-entry.js
+          ! test -f scripts/nf-smart-entry-final.js
+          ! test -f scripts/nf-history-panel.js
+          grep -q 'nf-entry-intelligent.js' sw.js
+          grep -q 'invoiceDocuments' scripts/nf-entry-intelligent.js
+          grep -q 'Confirmar entrada' scripts/nf-entry-intelligent.js
+          grep -q 'Cadastrar novo fornecedor' scripts/nf-entry-intelligent.js
+          grep -q 'application/pdf' scripts/nf-entry-intelligent.js
+          grep -q 'capture="environment"' scripts/nf-entry-intelligent.js
+          grep -q '\.xml' scripts/nf-entry-intelligent.js
           grep -q 'pdfjs-worker-version-fix.js' sw.js
-          grep -q 'application/pdf' scripts/supplier-document-reader.js
-          grep -q 'capture="environment"' scripts/supplier-document-reader.js
-          grep -q 'Fornecedor' scripts/supplier-document-reader-fix.js
-          grep -q 'Endereço completo + número' scripts/supplier-document-reader-fix.js
-          grep -q 'saveSupplier' scripts/supplier-document-reader-fix.js
-          grep -q 'DANFE' scripts/supplier-reader-final-correction.js
-          grep -q 'ENDERE' scripts/supplier-reader-final-correction.js
-          grep -q 'Entrada de estoque por NF' scripts/nf-stock-entry-reader.js
-          grep -q 'invoiceDocuments' scripts/nf-stock-entry-reader.js
-          grep -q 'entrada_nf' scripts/nf-stock-entry-reader.js
-          grep -q 'Fornecedor não encontrado na lista de fornecedores' scripts/nf-stock-entry-reader.js
-          grep -q 'Cadastrar fornecedor' scripts/nf-stock-entry-reader.js
-          grep -q 'Confirmar entrada' scripts/nf-stock-entry-reader.js
-          grep -q 'DADOS DO PRODUTO/SERVIÇO' scripts/nf-stock-entry-reader-fix.js
-          grep -q 'pdfStructuredText' scripts/nf-stock-entry-reader-fix.js
-          grep -q 'almoxarifado-v19' sw.js
           grep -q 'Outros' scripts/supplier-manual-fix.js
           grep -q 'window.saveSupplier' scripts/supplier-document-reader-autosave.js
+          grep -q 'almoxarifado-v24' sw.js
           git diff --check
