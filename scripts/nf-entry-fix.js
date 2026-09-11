@@ -1,19 +1,6 @@
-/* ALMOX LAB — FIX ÚNICO / temporário do ciclo de nova leitura NF.
-   Corrige o reenvio do mesmo arquivo e limpa o estado da leitura anterior.
-   Não cria outro motor nem substitui nf-entry-intelligent.js.
-*/
-(()=>{'use strict';
-if(window.__almoxNfEntryFix)return;window.__almoxNfEntryFix=true;
-const $=id=>document.getElementById(id);
-function resetReader(){const read=$('nfRead'),review=$('nfReview'),status=$('nfStatus'),file=$('nfFile'),cam=$('nfCam');if(read)read.style.display='block';if(review){review.style.display='none';review.innerHTML='';}if(status){status.className='card';status.textContent='Aguardando documento.';}if(file)file.value='';if(cam)cam.value='';}
-function bind(){const modal=$('almoxNfModal'),back=$('nfBack'),file=$('nfFile'),cam=$('nfCam'),close=$('nfClose'),pickers=document.querySelectorAll('[data-nf-file],label[for="nfFile"]');if(!modal)return false;
-if(file&&!file.dataset.nfResetFix){file.dataset.nfResetFix='1';file.addEventListener('click',()=>{file.value='';});}
-if(cam&&!cam.dataset.nfResetFix){cam.dataset.nfResetFix='1';cam.addEventListener('click',()=>{cam.value='';});}
-if(back&&!back.dataset.nfResetFix){back.dataset.nfResetFix='1';back.addEventListener('click',resetReader,true);}
-if(close&&!close.dataset.nfResetFix){close.dataset.nfResetFix='1';close.addEventListener('click',()=>setTimeout(resetReader,0));}
-pickers.forEach(el=>{if(el.dataset.nfPickerFix)return;el.dataset.nfPickerFix='1';el.addEventListener('click',e=>{if(file&&e.target!==file){e.preventDefault();e.stopPropagation();file.value='';file.click();}},true);});
-if(!modal.dataset.nfResetFix){modal.dataset.nfResetFix='1';const observer=new MutationObserver(()=>bind());observer.observe(modal,{childList:true,subtree:true});}
-return true;}
-function start(){if(bind())return;let tries=0;const timer=setInterval(()=>{if(bind()||++tries>40)clearInterval(timer);},250);}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-})();
+/* ALMOX LAB — ajuste do ciclo de nova leitura NF. */
+(()=>{'use strict';if(window.__almoxNfEntryFix)return;window.__almoxNfEntryFix=true;const $=id=>document.getElementById(id);
+function reset(){const r=$('nfRead'),v=$('nfReview'),s=$('nfStatus'),f=$('nfFile'),c=$('nfCam');if(r)r.style.display='block';if(v){v.style.display='none';v.innerHTML=''}if(s){s.className='card';s.textContent='Aguardando documento.'}if(f)f.value='';if(c)c.value=''}
+function bind(){const m=$('almoxNfModal'),f=$('nfFile'),c=$('nfCam'),b=$('nfBack'),x=$('nfClose');if(!m)return false;if(f&&!f.dataset.nfFix){f.dataset.nfFix=1;f.addEventListener('click',()=>f.value='')}if(c&&!c.dataset.nfFix){c.dataset.nfFix=1;c.addEventListener('click',()=>c.value='')}if(b&&!b.dataset.nfFix){b.dataset.nfFix=1;b.addEventListener('click',reset,true)}if(x&&!x.dataset.nfFix){x.dataset.nfFix=1;x.addEventListener('click',()=>setTimeout(reset,0))}const labels=m.querySelectorAll('label[for="nfFile"],label[for="nfCam"]');labels.forEach(l=>{if(l.dataset.nfPickerFix)return;l.dataset.nfPickerFix=1;l.addEventListener('click',e=>{const input=l.querySelector('input[type=file]')||$(l.htmlFor);if(!input||e.target===input)return;e.preventDefault();e.stopPropagation();input.value='';input.click()},true)});return true}
+function start(){if(bind())return;let n=0,t=setInterval(()=>{if(bind()||++n>40)clearInterval(t)},250)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();
