@@ -1,4 +1,4 @@
-const CACHE='almoxarifado-v11';
+const CACHE='almoxarifado-v12';
 const ASSETS=['./','./index.html','./manifest.json','./icons/icon-192.png','./icons/icon-512.png','./scripts/supplier-document-reader.js','./scripts/supplier-document-reader-fix.js','./scripts/supplier-document-reader-autosave.js','./scripts/supplier-document-reader-ie.js'];
 const READER='scripts/supplier-document-reader.js';
 const FIX='scripts/supplier-document-reader-fix.js';
@@ -8,7 +8,7 @@ self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 async function injectReader(response){
  const type=response.headers.get('content-type')||'';if(!type.includes('text/html'))return response;
- const html=await response.text();if(html.includes(IE))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
+ const html=await response.text();if(html.includes(`./${IE}`))return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
  const injected=html.replace('</body>',`<script src="./${READER}" defer></script><script src="./${FIX}" defer></script><script src="./${AUTOSAVE}" defer></script><script src="./${IE}" defer></script></body>`);
  const headers=new Headers(response.headers);headers.delete('content-length');return new Response(injected,{status:response.status,statusText:response.statusText,headers});
 }
