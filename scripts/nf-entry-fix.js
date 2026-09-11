@@ -1,6 +1,6 @@
-/* ALMOX LAB — FIX ÚNICO / temporário do ciclo de nova leitura NF.
-   Corrige o reenvio do mesmo arquivo e limpa o estado da leitura anterior.
-   Não cria outro motor nem substitui nf-entry-intelligent.js.
+/* ALMOX LAB — FIX ÚNICO do leitor NF.
+   Corrige o acionamento do seletor de arquivos, câmera e ciclo de nova leitura.
+   Mantém o motor principal em scripts/nf-entry-intelligent.js.
 */
 (()=>{'use strict';
 if(window.__almoxNfEntryFix)return;window.__almoxNfEntryFix=true;
@@ -16,17 +16,45 @@ function resetReader(){
   if(cam)cam.value='';
 }
 
+function bindPicker(inputId){
+  const input=$(inputId);
+  if(!input||input.dataset.nfPickerFix)return;
+  const button=input.parentElement?.querySelector('button');
+  if(!button)return;
+  input.dataset.nfPickerFix='1';
+  button.type='button';
+  button.addEventListener('click',e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    input.value='';
+    input.click();
+  });
+  input.addEventListener('click',()=>{input.value='';});
+}
+
 function bind(){
-  const modal=$('almoxNfModal'),back=$('nfBack'),file=$('nfFile'),cam=$('nfCam'),close=$('nfClose');
+  const modal=$('almoxNfModal'),back=$('nfBack'),close=$('nfClose');
   if(!modal)return false;
-  if(file&&!file.dataset.nfResetFix){
-    file.dataset.nfResetFix='1';
-    file.addEventListener('click',()=>{file.value='';});
+
+  bindPicker('nfFile');
+  bindPicker('nfCam');
+
+  const file=$('nfFile'),cam=$('nfCam');
+  if(file&&!file.dataset.nfChangeFix){
+    file.dataset.nfChangeFix='1';
+    file.addEventListener('change',()=>{
+      const selected=file.files?.[0];
+      if(selected)setTimeout(()=>{file.value='';},0);
+    });
   }
-  if(cam&&!cam.dataset.nfResetFix){
-    cam.dataset.nfResetFix='1';
-    cam.addEventListener('click',()=>{cam.value='';});
+  if(cam&&!cam.dataset.nfChangeFix){
+    cam.dataset.nfChangeFix='1';
+    cam.addEventListener('change',()=>{
+      const selected=cam.files?.[0];
+      if(selected)setTimeout(()=>{cam.value='';},0);
+    });
   }
+
   if(back&&!back.dataset.nfResetFix){
     back.dataset.nfResetFix='1';
     back.addEventListener('click',resetReader,true);
@@ -35,9 +63,12 @@ function bind(){
     close.dataset.nfResetFix='1';
     close.addEventListener('click',()=>setTimeout(resetReader,0));
   }
+
   if(!modal.dataset.nfResetFix){
     modal.dataset.nfResetFix='1';
     const observer=new MutationObserver(()=>{
+      bindPicker('nfFile');
+      bindPicker('nfCam');
       const currentBack=$('nfBack');
       if(currentBack&&!currentBack.dataset.nfResetFix){
         currentBack.dataset.nfResetFix='1';
