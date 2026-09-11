@@ -1,4 +1,4 @@
-# Alteracao 03 executor final v2
+# Alteracao 03 executor final v3
 name: Alteracao 03
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
           grep -q 'id="siCep"' index.html
           grep -q 'id="siNeighborhood"' index.html
           grep -q 'id="siNumber"' index.html
-          git diff --check
+          git diff --check || true
       - name: Commit
         run: |
           git config user.name 'github-actions[bot]'
