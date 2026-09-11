@@ -1,4 +1,4 @@
-const CACHE='almoxarifado-v13';
+const CACHE='almoxarifado-v14';
 const ASSETS=['./','./index.html','./manifest.json','./icons/icon-192.png','./icons/icon-512.png','./scripts/supplier-document-reader.js','./scripts/supplier-document-reader-fix.js','./scripts/supplier-document-reader-autosave.js','./scripts/supplier-document-reader-ie.js','./scripts/supplier-manual-fix.js'];
 const READER='scripts/supplier-document-reader.js';
 const FIX='scripts/supplier-document-reader-fix.js';
