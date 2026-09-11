@@ -36,4 +36,9 @@ jobs:
           grep -q 'capture="environment"' scripts/supplier-document-reader.js
           grep -q 'tesseract.js' scripts/supplier-document-reader-fix.js
           grep -q 'pdf.min.js' scripts/supplier-document-reader-fix.js
+          grep -q 'Razão social' scripts/supplier-document-reader-fix.js
+          grep -q 'Endereço + número' scripts/supplier-document-reader-fix.js
+          grep -q 'Salvar fornecedor' scripts/supplier-document-reader-fix.js
+          grep -q 'saveSupplier' scripts/supplier-document-reader-fix.js
+          grep -q 'almoxarifado-v12' sw.js
           git diff --check
