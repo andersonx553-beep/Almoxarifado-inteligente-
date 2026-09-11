@@ -39,11 +39,11 @@ jobs:
           grep -q 'capture="environment"' scripts/supplier-document-reader.js
           grep -q 'tesseract.js' scripts/supplier-document-reader-fix.js
           grep -q 'pdf.min.js' scripts/supplier-document-reader-fix.js
-          grep -q 'Razão social' scripts/supplier-document-reader-fix.js
-          grep -q 'Endereço + número' scripts/supplier-document-reader-fix.js
+          grep -q 'Fornecedor' scripts/supplier-document-reader-fix.js
+          grep -q 'Endereço completo + número' scripts/supplier-document-reader-fix.js
           grep -q 'Salvar fornecedor' scripts/supplier-document-reader-fix.js
           grep -q 'saveSupplier' scripts/supplier-document-reader-fix.js
           grep -q 'sCityState' scripts/supplier-manual-fix.js
           grep -q 'PURPOSE_DEFAULT' scripts/supplier-manual-fix.js
-          grep -q 'almoxarifado-v13' sw.js
+          grep -q 'almoxarifado-v14' sw.js
           git diff --check
