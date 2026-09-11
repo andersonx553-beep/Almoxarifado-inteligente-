@@ -1,0 +1,39 @@
+name: Leitor Inteligente - validação
+
+on:
+  push:
+    paths:
+      - 'scripts/supplier-document-reader.js'
+      - 'scripts/supplier-document-reader-fix.js'
+      - 'scripts/supplier-document-reader-autosave.js'
+      - 'scripts/supplier-document-reader-ie.js'
+      - 'sw.js'
+      - '.github/workflows/leitor-inteligente.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verificar sintaxe JavaScript
+        run: |
+          node --check scripts/supplier-document-reader.js
+          node --check scripts/supplier-document-reader-fix.js
+          node --check scripts/supplier-document-reader-autosave.js
+          node --check scripts/supplier-document-reader-ie.js
+          node --check sw.js
+      - name: Verificar integração
+        run: |
+          grep -q 'supplier-document-reader.js' sw.js
+          grep -q 'supplier-document-reader-fix.js' sw.js
+          grep -q 'supplier-document-reader-autosave.js' sw.js
+          grep -q 'supplier-document-reader-ie.js' sw.js
+          grep -q 'application/pdf' scripts/supplier-document-reader.js
+          grep -q 'capture="environment"' scripts/supplier-document-reader.js
+          grep -q 'tesseract.js' scripts/supplier-document-reader-fix.js
+          grep -q 'pdf.min.js' scripts/supplier-document-reader-fix.js
+          git diff --check
